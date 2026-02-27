@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const LOCK_OPTIONS = [
   { days: 30,  label: '30 DAYS',  multiplier: 1, tag: 'CASUAL'    },
@@ -18,7 +19,7 @@ export default function LockPage() {
   const [loading,  setLoading]    = useState(false);
   const [done,     setDone]       = useState(false);
 
-  const option      = LOCK_OPTIONS.find(o => o.days === selected)!;
+  const option      = LOCK_OPTIONS.find(o => o.days === selected) ?? LOCK_OPTIONS[LOCK_OPTIONS.length - 1];
   const parsed      = parseFloat(amount) || 0;
   const votingPower = parsed * option.multiplier;
 
@@ -241,30 +242,7 @@ export default function LockPage() {
           </button>
         )}
 
-        {/* Footer */}
-        <div style={{ marginTop: 56, textAlign: 'center', userSelect: 'none' }}>
-          <div style={{ fontSize: 11, color: '#444444', letterSpacing: '0.14em', marginBottom: 6 }}>
-            TIX-DAO  ·  SOLANA GRAVEYARD HACKATHON 2026  ·  BUILT ON REALMS
-          </div>
-          <div style={{ fontSize: 11, color: '#333333', letterSpacing: '0.1em' }}>
-            by{' '}
-            <a href='https://orthonode.xyz' target='_blank' rel='noopener noreferrer'
-              style={{ color: '#555555', textDecoration: 'none', borderBottom: '1px solid #333333' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#aaaaaa'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#555555'; }}
-            >
-              Orthonode Infrastructure Labs
-            </a>
-            {' '}·{' '}
-            <a href='https://orthonode.xyz' target='_blank' rel='noopener noreferrer'
-              style={{ color: '#444444', textDecoration: 'none' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#888888'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#444444'; }}
-            >
-              orthonode.xyz
-            </a>
-          </div>
-        </div>
+        <Footer />
 
       </div>
     </main>

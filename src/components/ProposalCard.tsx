@@ -80,7 +80,7 @@ export default function ProposalCard({
   yes, no, index, myVote, connected, onVote,
 }: ProposalCardProps) {
   const total    = yes + no;
-  const yesPct   = Math.round((yes / total) * 100);
+  const yesPct   = total > 0 ? Math.round((yes / total) * 100) : 0;
   const noPct    = 100 - yesPct;
   const isActive = status === 'Active';
 

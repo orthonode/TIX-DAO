@@ -1,6 +1,6 @@
 'use client';
 
-import React, { FC, ReactNode, useMemo, useCallback } from 'react';
+import { FC, ReactNode, useMemo, useCallback } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork, WalletError } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';

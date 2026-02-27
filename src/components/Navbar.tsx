@@ -26,9 +26,9 @@ export default function Navbar() {
         borderBottom: '1px solid #1e1e1e',
         background: '#090909',
       }}>
-        <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57', display: 'inline-block', opacity: 0.9 }} />
-        <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e', display: 'inline-block', opacity: 0.9 }} />
-        <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840', display: 'inline-block', opacity: 0.9 }} />
+        <span aria-hidden="true" style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57', display: 'inline-block', opacity: 0.9 }} />
+        <span aria-hidden="true" style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e', display: 'inline-block', opacity: 0.9 }} />
+        <span aria-hidden="true" style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840', display: 'inline-block', opacity: 0.9 }} />
         <span style={{ marginLeft: 20, fontSize: 11, color: '#4a4a4a', letterSpacing: '0.18em', userSelect: 'none' }}>
           TIX-DAO  ·  GOVERNANCE TERMINAL  ·  SOLANA DEVNET  ·  ORTHONODE LABS
         </span>
