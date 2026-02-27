@@ -206,6 +206,7 @@ Confirming all hackathon requirements are met:
 - [x] TERMS.md — terms of use and disclaimer
 - [x] PRIVACY.md — privacy policy (no data collected)
 - [x] HACKATHON.md — this document
+- [x] AUDIT.md — full security audit report (2026-02-27, zero findings)
 - [x] README.md — polished, badge-decorated, judge-ready
 - [x] LICENSE — MIT 2026
 

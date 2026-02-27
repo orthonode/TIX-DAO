@@ -78,6 +78,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `PRIVACY.md` — no data collected, wallet key handling, Vercel hosting disclosure
 - `HACKATHON.md` — judges brief, prize track alignment, submission checklist
 - `CHANGELOG.md` — this file
+- `AUDIT.md` — security audit report (zero findings, 2026-02-27)
 
 ### Deployed
 - Vercel: https://tix-dao.vercel.app
