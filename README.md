@@ -24,8 +24,7 @@
 
 **Live:** [https://tix-dao.vercel.app](https://tix-dao.vercel.app)
 
-<!-- Add YouTube thumbnail after recording your demo video -->
-[![TIX-DAO Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red.svg)](https://youtube.com)
+[![TIX-DAO Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red.svg)](https://youtu.be/DAG3S8uOmeE)
 
 > Record using the 3-minute script in [`docs/HACKATHON.md`](./docs/HACKATHON.md).
 

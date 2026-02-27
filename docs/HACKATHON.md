@@ -150,7 +150,7 @@ The three proposals on `/proposals` are not hypothetical — they are the exact 
 |---|---|
 | Live Demo | https://tix-dao.vercel.app |
 | GitHub Repository | `https://github.com/orthonode/tix-dao` |
-| Video Walkthrough | *(add YouTube link after recording)* |
+| Video Walkthrough | https://youtu.be/DAG3S8uOmeE |
 | Devnet Explorer | [Solana Explorer — Devnet](https://explorer.solana.com/?cluster=devnet) |
 | SPL-Governance Program | [GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw on Devnet](https://explorer.solana.com/address/GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw?cluster=devnet) |
 
