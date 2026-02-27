@@ -38,11 +38,11 @@ SPL-Governance already implements proposal lifecycle (Draft → Voting → Succe
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │              Next.js 16 App Router (localhost:3000)           │  │
 │  │                                                               │  │
-│  │  ┌─────────────┐  ┌──────────────────┐  ┌────────────────┐   │  │
-│  │  │  /           │  │  /create         │  │  /proposals    │   │  │
-│  │  │  Home        │  │  Create DAO      │  │  Vote          │   │  │
-│  │  │  page.tsx    │  │  page.tsx        │  │  page.tsx      │   │  │
-│  │  └─────────────┘  └──────────────────┘  └────────────────┘   │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌─────────────┐  ┌──────────┐  ┌──────────┐  │  │
+│  │  │  /        │  │  /lock   │  │  /create    │  │/proposals│  │ /finance │  │  │
+│  │  │  Home     │  │  ve$TICK │  │  Create DAO │  │  Vote    │  │  RWA     │  │  │
+│  │  │ page.tsx  │  │ page.tsx │  │  page.tsx   │  │ page.tsx │  │ page.tsx │  │  │
+│  │  └──────────┘  └──────────┘  └─────────────┘  └──────────┘  └──────────┘  │  │
 │  │                                                               │  │
 │  │  ┌────────────────────────────────────────────────────────┐   │  │
 │  │  │         WalletWrapper (Client Component, ssr:false)    │   │  │
@@ -225,10 +225,12 @@ After voting_cool_off_time elapses
 ### App Router Structure
 ```
 src/app/
-  layout.tsx        → Server Component — exports metadata, renders <html>
-  page.tsx          → Client Component — Home screen
-  create/page.tsx   → Client Component — Create DAO form
-  proposals/page.tsx → Client Component — Proposals + voting
+  layout.tsx          → Server Component — exports metadata, renders <html>
+  page.tsx            → Client Component — Home screen (graveyard + hero)
+  lock/page.tsx       → Client Component — ve$TICK lock duration + voting power calc
+  create/page.tsx     → Client Component — Create DAO form with live deploy log
+  proposals/page.tsx  → Client Component — Proposals + voting (block-bar UI)
+  finance/page.tsx    → Client Component — RWA advance calculator + mock term sheet
 ```
 
 ### SSR Safety Pattern
@@ -266,7 +268,8 @@ Next.js 16 defaults to Turbopack. TIX-DAO uses `--webpack` explicitly because `@
 | DAO creation | ⚠️ Simulated | `setTimeout` mock; no on-chain call |
 | Proposal loading | ⚠️ Simulated | Hardcoded mock data in `proposals/page.tsx` |
 | Casting votes | ⚠️ Simulated | React state only; no `castVote` instruction |
-| ve$TICK escrow | ⚠️ Not yet built | Planned for Phase 2 |
+| RWA advance | ⚠️ Simulated | `/finance` page — TICKS protocol integration ships Phase 3 |
+| ve$TICK lock UI | ✅ Simulated | `/lock` page — escrow contract ships Phase 2 |
 | Real treasury | ⚠️ Not yet built | Planned for Phase 2 |
 | Council multi-sig | ⚠️ Not yet built | Planned for Phase 2 |
 

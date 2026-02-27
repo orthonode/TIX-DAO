@@ -108,9 +108,11 @@ The app will be available at **http://localhost:3000**.
 
 **Verify it's working:**
 1. Open http://localhost:3000 — home page with the graveyard table should load
-2. Open http://localhost:3000/create — Create DAO form should render
-3. Open http://localhost:3000/proposals — three proposals with vote bars should render
-4. Click "Connect Wallet" in the top-right — Phantom modal should open
+2. Open http://localhost:3000/lock — ve$TICK lock duration cards should render
+3. Open http://localhost:3000/create — Create DAO form should render
+4. Open http://localhost:3000/proposals — three proposals with vote bars should render
+5. Open http://localhost:3000/finance — revenue/advance inputs with live calc should render
+6. Click "Connect Wallet" in the top-right — Phantom modal should open
 
 ---
 
@@ -206,10 +208,11 @@ The public Solana devnet RPC (`api.devnet.solana.com`) is rate-limited and unrel
 After deploying (locally or to Vercel), run through this checklist:
 
 - [ ] Home page loads at `/` with the graveyard table visible
-- [ ] Navbar shows `TIX-DAO_`, `$ ./create-dao`, `$ ./proposals` links
+- [ ] Navbar shows `TIX-DAO_`, `$ ./create-dao`, `$ ./proposals`, `$ ./lock-tokens`, `$ ./finance` links
 - [ ] "Connect Wallet" button appears in the top-right
 - [ ] Clicking "Connect Wallet" opens the wallet modal (Phantom/Solflare listed)
 - [ ] Connecting Phantom switches button to show truncated address
+- [ ] `/lock` loads four lock-duration cards; selecting a card highlights it; entering amount updates ve$TICK power
 - [ ] `/create` loads the Create DAO form
 - [ ] Without wallet: yellow warning "WALLET NOT CONNECTED" appears
 - [ ] With wallet: token mint field shows truncated public key
@@ -217,6 +220,8 @@ After deploying (locally or to Vercel), run through this checklist:
 - [ ] `/proposals` loads three proposals with block-character progress bars
 - [ ] Without wallet: "connect wallet to cast your vote" hint appears
 - [ ] With wallet: clicking `[ Vote Yes ]` updates the bar and locks the button
+- [ ] `/finance` loads revenue + advance inputs; typing numbers updates loan/repayment/yield live
+- [ ] Clicking Request Advance shows loading then mock term sheet
 
 ---
 

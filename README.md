@@ -184,6 +184,11 @@ Full guide — Vercel deploy, custom RPC, troubleshooting: [`docs/DEPLOYMENT.md`
 - [x] Hero section with governance CTA
 - [x] Terminal boot-sequence aesthetic with CRT scanlines
 
+**Lock Tokens (`/lock`)**
+- [x] Four lock-duration cards — 30d (1×) · 90d (2×) · 180d (3×) · 365d (4×) — click to select
+- [x] $TICK amount input with live ve$TICK voting power display (`amount × multiplier`)
+- [x] 2-second loading state → ✅ success state with exact numbers
+
 **Create DAO (`/create`)**
 - [x] Venue name + quorum threshold configuration
 - [x] Wallet pubkey shown as governance token mint
@@ -195,6 +200,11 @@ Full guide — Vercel deploy, custom RPC, troubleshooting: [`docs/DEPLOYMENT.md`
 - [x] Block-character `█░` progress bars — YES/NO split live
 - [x] Vote YES / Vote No — one wallet, one vote, locked after cast
 - [x] ACTIVE / PASSED status badges
+
+**Finance (`/finance`)**
+- [x] Expected ticket revenue + advance % inputs
+- [x] Live calculation of loan amount, repayment, and lender yield (3.5% origination)
+- [x] Request Advance → mock term sheet with TICKS protocol collateral parameters
 
 **Infrastructure**
 - [x] Wallet Standard auto-discovery — Phantom, Solflare, Backpack with no explicit registration
@@ -250,7 +260,9 @@ tix-dao/
 │   │   ├── globals.css           Terminal theme, CRT scanlines, wallet overrides
 │   │   ├── page.tsx              Home — graveyard narrative + hero
 │   │   ├── create/page.tsx       Create DAO — form with live deploy log
-│   │   └── proposals/page.tsx    Proposals — block-bar voting UI
+│   │   ├── proposals/page.tsx    Proposals — block-bar voting UI
+│   │   ├── lock/page.tsx         Lock Tokens — ve$TICK duration selector + power calc
+│   │   └── finance/page.tsx      Finance — RWA advance calculator + mock term sheet
 │   │
 │   ├── components/
 │   │   ├── WalletProvider.tsx    Solana context — autoConnect + silent onError

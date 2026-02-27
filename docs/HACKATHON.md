@@ -185,7 +185,7 @@ Confirming all hackathon requirements are met:
 - [x] Solana devnet (not mainnet, not local validator)
 - [x] SPL-Governance program address used: `GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw`
 - [x] Wallet connection via Wallet Standard (Phantom/Solflare compatible)
-- [x] At least one governance UI screen (Create DAO, Proposals)
+- [x] Five UI screens: Home · Lock Tokens (ve$TICK) · Create DAO · Proposals · Finance (RWA)
 
 **Realms track requirements:**
 - [x] Uses Realms/SPL-Governance — not a custom governance program
