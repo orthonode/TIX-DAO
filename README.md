@@ -117,7 +117,7 @@ Full alignment: [`docs/HACKATHON.md`](./docs/HACKATHON.md)
 ┌────────────────────────────────────────────────────────────────┐
 │                       USER BROWSER                             │
 │                                                                │
-│  Next.js 16 App Router  (/  ·  /create  ·  /proposals)        │
+│  Next.js 16 App Router  (/  ·  /create  ·  /proposals  ·  /lock  ·  /finance)  │
 │  ┌────────────────────────────────────────────────────────┐    │
 │  │  WalletWrapper (Client Component, ssr: false)          │    │
 │  │    SolanaWalletProvider                                │    │
@@ -155,7 +155,7 @@ Full diagram + account breakdown: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.m
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_ORG/tix-dao.git
+git clone https://github.com/orthonode/TIX-DAO.git
 cd tix-dao
 
 # Install
@@ -256,39 +256,61 @@ tix-dao/
 │
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx            Server Component — metadata + WalletWrapper
-│   │   ├── globals.css           Terminal theme, CRT scanlines, wallet overrides
-│   │   ├── page.tsx              Home — graveyard narrative + hero
-│   │   ├── create/page.tsx       Create DAO — form with live deploy log
-│   │   ├── proposals/page.tsx    Proposals — block-bar voting UI
-│   │   ├── lock/page.tsx         Lock Tokens — ve$TICK duration selector + power calc
-│   │   └── finance/page.tsx      Finance — RWA advance calculator + mock term sheet
+│   │   ├── layout.tsx              Server Component — metadata, OG/Twitter tags, WalletWrapper
+│   │   ├── globals.css             Terminal theme, CRT scanlines, wallet overrides
+│   │   ├── not-found.tsx           Custom 404 — server component with metadata
+│   │   ├── NotFoundClient.tsx      Client component — interactive 404 page
+│   │   ├── page.tsx                Home — graveyard narrative + hero
+│   │   ├── create/
+│   │   │   ├── layout.tsx          Per-page metadata (title: "Create Venue DAO")
+│   │   │   └── page.tsx            Create DAO — form with live deploy log
+│   │   ├── proposals/
+│   │   │   ├── layout.tsx          Per-page metadata (title: "Proposals")
+│   │   │   └── page.tsx            Proposals — block-bar voting UI
+│   │   ├── lock/
+│   │   │   ├── layout.tsx          Per-page metadata (title: "Lock Tokens — ve$TICK")
+│   │   │   └── page.tsx            Lock Tokens — ve$TICK duration selector + power calc
+│   │   └── finance/
+│   │       ├── layout.tsx          Per-page metadata (title: "Venue Finance — RWA Advance")
+│   │       └── page.tsx            Finance — RWA advance calculator + mock term sheet
 │   │
 │   ├── components/
-│   │   ├── WalletProvider.tsx    Solana context — autoConnect + silent onError
-│   │   ├── WalletWrapper.tsx     Client Component wrapper for ssr:false
-│   │   └── Navbar.tsx            Terminal nav — window chrome + WalletMultiButton
+│   │   ├── WalletProvider.tsx      Solana context — autoConnect + silent onError
+│   │   ├── WalletWrapper.tsx       Client Component wrapper for ssr:false
+│   │   ├── Navbar.tsx              Terminal nav — window chrome + WalletMultiButton
+│   │   ├── ProposalCard.tsx        Reusable proposal card — BlockBar, VoteBtn, props interface
+│   │   └── Footer.tsx              Shared footer — Orthonode credit, optional vote note
 │   │
 │   └── lib/
-│       └── governance.ts         Env-var constants — GOVERNANCE_PROGRAM_ID, NETWORK
+│       └── governance.ts           Env-var constants — GOVERNANCE_PROGRAM_ID, NETWORK
+│
+├── public/
+│   └── robots.txt                  Allow all crawlers + sitemap reference
 │
 ├── docs/
-│   ├── ARCHITECTURE.md           Full technical architecture
-│   ├── DEPLOYMENT.md             Local dev, Vercel, custom RPC, troubleshooting
-│   ├── ROADMAP.md                4-phase roadmap with honest risks
-│   ├── CONTRIBUTING.md           Branch strategy, commit convention, PR process
-│   ├── SECURITY.md               Threat model, flash loan protection, disclosure
-│   ├── TERMS.md                  Terms of use and disclaimer
-│   ├── PRIVACY.md                Privacy policy — no data collected
-│   └── HACKATHON.md              Judges brief — narrative, track alignment, checklist
+│   ├── ARCHITECTURE.md             Full technical architecture
+│   ├── CHANGELOG.md                Detailed changelog
+│   ├── DEPLOYMENT.md               Local dev, Vercel, custom RPC, troubleshooting
+│   ├── ROADMAP.md                  4-phase roadmap with honest risks
+│   ├── CONTRIBUTING.md             Branch strategy, commit convention, PR process
+│   ├── SECURITY.md                 Threat model, flash loan protection, disclosure
+│   ├── TERMS.md                    Terms of use and disclaimer
+│   ├── PRIVACY.md                  Privacy policy — no data collected
+│   └── HACKATHON.md                Judges brief — narrative, track alignment, checklist
 │
-├── next.config.ts                Webpack fallback for fs/os/path/crypto
-├── .env.local                    SOLANA_NETWORK + GOVERNANCE_PROGRAM_ID
-├── .env.local.example            Template — copy to .env.local
-├── package.json                  All deps including @solana/spl-governance
-├── tsconfig.json                 TypeScript strict mode
-├── README.md                     This file
-└── LICENSE                       MIT 2026
+├── CHANGELOG.md                    Root changelog (summary, links to docs/CHANGELOG.md)
+├── CONTRIBUTING.md                 Root contributing guide (links to docs/CONTRIBUTING.md)
+├── ROADMAP.md                      Root roadmap summary (links to docs/ROADMAP.md)
+├── SECURITY.md                     Root security policy (links to docs/SECURITY.md)
+├── next.config.ts                  Webpack fallback for fs/os/path/crypto
+├── tailwind.config.ts              Tailwind CSS 4.x content paths
+├── .env.local                      SOLANA_NETWORK + GOVERNANCE_PROGRAM_ID
+├── .env.local.example              Template — copy to .env.local
+├── .env.example                    Alias template for contributors
+├── package.json                    All deps including @solana/spl-governance
+├── tsconfig.json                   TypeScript strict mode
+├── README.md                       This file
+└── LICENSE                         MIT 2026
 ```
 
 ---

@@ -225,12 +225,22 @@ After voting_cool_off_time elapses
 ### App Router Structure
 ```
 src/app/
-  layout.tsx          → Server Component — exports metadata, renders <html>
-  page.tsx            → Client Component — Home screen (graveyard + hero)
-  lock/page.tsx       → Client Component — ve$TICK lock duration + voting power calc
-  create/page.tsx     → Client Component — Create DAO form with live deploy log
-  proposals/page.tsx  → Client Component — Proposals + voting (block-bar UI)
-  finance/page.tsx    → Client Component — RWA advance calculator + mock term sheet
+  layout.tsx                  → Server Component — exports metadata (OG, Twitter), renders <html>
+  not-found.tsx               → Server Component — exports 404 metadata, delegates to NotFoundClient
+  NotFoundClient.tsx          → Client Component — interactive 404 page with hover effects
+  page.tsx                    → Client Component — Home screen (graveyard + hero)
+  create/
+    layout.tsx                → Server Component — per-page metadata (title: "Create Venue DAO")
+    page.tsx                  → Client Component — Create DAO form with live deploy log
+  proposals/
+    layout.tsx                → Server Component — per-page metadata (title: "Proposals")
+    page.tsx                  → Client Component — Proposals + voting (block-bar UI)
+  lock/
+    layout.tsx                → Server Component — per-page metadata (title: "Lock Tokens — ve$TICK")
+    page.tsx                  → Client Component — ve$TICK lock duration + voting power calc
+  finance/
+    layout.tsx                → Server Component — per-page metadata (title: "Venue Finance — RWA Advance")
+    page.tsx                  → Client Component — RWA advance calculator + mock term sheet
 ```
 
 ### SSR Safety Pattern

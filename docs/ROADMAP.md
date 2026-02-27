@@ -23,9 +23,16 @@ Everything in this phase is built and running at the demo URL.
 - [x] Next.js 16 App Router with full TypeScript and Tailwind 4
 - [x] Terminal-aesthetic UI — monochrome black/silver, CRT scanlines, block-character vote bars
 - [x] Home screen — graveyard narrative, hero, dead-project table
+- [x] Lock Tokens screen — four ve$TICK duration cards (30d 1× · 90d 2× · 180d 3× · 365d 4×), live voting power calc
 - [x] Create DAO screen — venue name, quorum %, token mint (simulated deploy)
 - [x] Proposals screen — 3 live proposals with YES/NO voting (simulated on-chain)
+- [x] Finance screen — RWA advance calculator (loan amount, repayment, lender yield), mock term sheet
 - [x] Responsive Navbar — window chrome, active route indicators, Wallet Multi Button
+- [x] Shared Footer component — Orthonode credit, optional governance note
+- [x] Custom 404 page — terminal aesthetic, proper HTTP 404 status
+- [x] Per-page metadata via sublayouts — title template `%s | TIX-DAO`
+- [x] OG/Twitter Card metadata — social share previews
+- [x] robots.txt — allow all crawlers, sitemap reference
 
 **Wallet Integration**
 - [x] `@solana/wallet-adapter-react` with Wallet Standard auto-discovery

@@ -24,6 +24,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.1] — 2026-02-27 — Optimization Pass
+
+### Fixed
+- Division-by-zero bug in `ProposalCard.tsx` — `yesPct` now guarded with `total > 0` check
+- Non-null assertion crash in `lock/page.tsx` — `.find()` result now falls back to last option via `??`
+- Missing `min='0'` attribute on finance revenue input (allowed negative values)
+
+### Added
+- `Footer.tsx` — shared footer component extracted from 5 pages (DRY fix)
+- `not-found.tsx` + `NotFoundClient.tsx` — custom 404 page (server+client split for metadata + interactivity)
+- Per-page sublayouts: `create/layout.tsx`, `proposals/layout.tsx`, `lock/layout.tsx`, `finance/layout.tsx`
+- OG/Twitter Card metadata in root `layout.tsx` (social share previews)
+- `public/robots.txt` — allow all crawlers, sitemap reference
+- `aria-hidden="true"` on decorative Navbar window-chrome dots (accessibility)
+
+### Changed
+- Removed unused `React` default import from `WalletProvider.tsx` (JSX transform handles it)
+- `proposals/page.tsx` refactored to use `<ProposalCard />` component
+
+---
+
 ## [1.0.0] — 2026-02-27 — Graveyard Hackathon MVP
 
 ### Added — Pages
@@ -37,6 +58,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `WalletProvider.tsx` — Solana Wallet Standard auto-discovery, `autoConnect=true`, silent `onError` (swallows WalletNotReadyError, user rejection, already-pending)
 - `WalletWrapper.tsx` — SSR-safe client component wrapper (`dynamic(() => import, { ssr: false })`)
 - `ProposalCard.tsx` — extracted reusable proposal card (BlockBar + VoteBtn internals, full props interface)
+- `Footer.tsx` — shared footer component with optional `showVoteNote` prop (used across all 5 pages)
 - `Navbar.tsx` — sticky terminal nav, macOS window chrome dots, active-route underline, WalletMultiButton
 
 ### Added — Infrastructure
