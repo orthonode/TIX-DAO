@@ -52,8 +52,10 @@ export default function Navbar() {
 
           {/* Links */}
           {[
-            { href: '/create',    label: './create-dao' },
-            { href: '/proposals', label: './proposals'  },
+            { href: '/create',    label: './create-dao'    },
+            { href: '/proposals', label: './proposals'     },
+            { href: '/lock',      label: './lock-tokens'   },
+            { href: '/finance',   label: './finance'       },
           ].map(({ href, label }) => {
             const active = path === href;
             return (
