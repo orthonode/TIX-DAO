@@ -123,7 +123,7 @@ These terms are governed by the laws of India. Any disputes shall be subject to 
 
 ## 12. Contact
 
-For questions about these terms: [orthonode.xyz](https://orthonode.xyz) · [@orthonode](https://twitter.com/orthonode)
+For questions about these terms: [orthonode.xyz](https://orthonode.xyz) · [@OrthonodeSys](https://twitter.com/OrthonodeSys)
 
 ---
 

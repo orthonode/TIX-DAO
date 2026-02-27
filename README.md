@@ -316,7 +316,7 @@ MIT — see [`LICENSE`](./LICENSE).
 
 **— Orthonode Infrastructure Labs**
 
-[orthonode.xyz](https://orthonode.xyz) · [@orthonode](https://twitter.com/orthonode) · Bhopal, Madhya Pradesh, India
+[orthonode.xyz](https://orthonode.xyz) · [@OrthonodeSys](https://twitter.com/OrthonodeSys) · Bhopal, Madhya Pradesh, India
 
 ---
 

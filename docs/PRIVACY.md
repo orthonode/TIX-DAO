@@ -122,7 +122,7 @@ This privacy policy may be updated as the protocol moves from hackathon prototyp
 
 ## 12. Contact
 
-For privacy questions or concerns: [orthonode.xyz](https://orthonode.xyz) · [@orthonode](https://twitter.com/orthonode)
+For privacy questions or concerns: [orthonode.xyz](https://orthonode.xyz) · [@OrthonodeSys](https://twitter.com/OrthonodeSys)
 
 ---
 
