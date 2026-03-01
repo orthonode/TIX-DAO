@@ -50,15 +50,21 @@ The wallet connection is handled entirely by your browser extension. TIX-DAO cal
 
 - **TX1** creates a new SPL token mint account on devnet (your wallet address is the mint authority — this is public)
 - **TX2** creates a Realm PDA and a TokenOwnerRecord PDA on devnet (your wallet address is recorded as realm authority and governing token depositor — this is public)
-- **TX3** creates a GovernanceAccount PDA and a ProposalV2 PDA on devnet (your wallet address is recorded as proposal creator — this is public)
+- **TX3** creates a GovernanceAccount PDA and three ProposalV2 PDAs on devnet (your wallet address is recorded as proposal creator — this is public)
+
+**Voting** — when you cast a vote on the `/proposals` page, a real `castVote` CPI call is submitted:
+- A `VoteRecordV2` PDA is created on devnet (your wallet address is permanently recorded as voter for that proposal)
+- Your vote choice (Approve / Deny) is stored on-chain and cannot be changed or deleted
+
+**Token locking** — when you lock tokens on the `/lock` page, a `depositGoverningTokens` CPI call is submitted, recording your deposit amount and wallet address in a `TokenOwnerRecord` PDA on devnet.
+
+**Finance calculator** — the `/finance` page is UI-only; no transaction is submitted and no on-chain data is written.
 
 These are **Solana devnet transactions**. Devnet is a public test network — wallet addresses, transaction signatures, and account data are visible to anyone querying the Solana devnet network or using the Solana Explorer.
 
-Devnet data is not financially sensitive (devnet SOL has no value), but your wallet address is permanently associated with the transactions you sign.
+Devnet data is not financially sensitive (devnet SOL has no value), but your wallet address is permanently associated with every transaction you sign.
 
 Blockchain data is public and immutable by design. TIX-DAO cannot delete on-chain records.
-
-**Proposal voting** (castVote CPI) is not yet wired to real on-chain calls — vote buttons currently update browser state only and write nothing to the blockchain. This changes in Phase 2.
 
 **Mainnet** is not used. No real funds or mainnet assets are involved.
 
@@ -124,7 +130,7 @@ TIX-DAO is not directed at children under 13 (or the applicable age of digital c
 
 ## 11. Changes to this Policy
 
-This privacy policy may be updated as the protocol moves from hackathon prototype to production (Phase 2+), particularly when real on-chain transactions are introduced. Material changes will be noted in the project changelog. The effective date at the top of this document will be updated accordingly.
+This privacy policy may be updated as the protocol moves from devnet to mainnet (Phase 4). Material changes will be noted in the project changelog. The effective date at the top of this document will be updated accordingly.
 
 ---
 

@@ -5,13 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.2.0] — 2026-03-01 — Real On-Chain Voting, All Simulations Removed
+
+### Added
+- Real `castVote` CPI for all 3 proposals — `VoteRecordV2` PDAs created on Solana devnet
+- `NoDAO` fallback on `/proposals` when no URL params present
+- `STANDARD_PROPOSALS` shared constant — same titles used in TX3 and proposals UI
+- TX3 now creates all 3 proposals + signs off all 3 in one transaction
+- Per-proposal Explorer tx links on proposals page
+
+### Changed
+- `proposals/page.tsx` complete rewrite — no `MOCK_PROPOSALS`, real voting wired for all 3 proposals
+- `finance/page.tsx` — removed `setTimeout` simulation; synchronous term sheet display
+- Shareable URL uses `p1`, `p2`, `p3` params for all 3 proposal PDAs
+- Create DAO success screen shows all 3 proposal accounts
+
+---
+
 ## [1.1.0] — 2026-03-01 — Real On-Chain SPL-Governance
 
 ### Added
-- Real 3-TX on-chain deploy: TX1 mint $TICK · TX2 createRealm + deposit · TX3 createGovernance + createProposal + signOff — all confirmed on Solana devnet
+- Real 3-TX on-chain deploy: TX1 mint $TICK · TX2 createRealm + deposit · TX3 createGovernance + 3 proposals + signOff — all confirmed on Solana devnet
 - `src/lib/governanceActions.ts` — full on-chain helper module
-- Explorer links for all 3 tx signatures + 4 account addresses on Create DAO success screen
-- Shareable `/proposals?realm=…&governance=…&proposal=…&mint=…` URL post-deploy
+- Explorer links for all 3 tx signatures + account addresses on Create DAO success screen
+- Shareable URL with realm, governance, and all 3 proposal PDAs generated post-deploy
 
 ### Fixed
 - SES lockdown (Phantom): `bs58` corruption fixed by using pre-computed `Uint8Array` bytes for `GOVERNANCE_PROGRAM_ID`

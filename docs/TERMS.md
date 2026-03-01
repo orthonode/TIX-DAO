@@ -23,8 +23,10 @@ By accessing or using TIX-DAO at [https://tix-dao.vercel.app](https://tix-dao.ve
 TIX-DAO is a **hackathon prototype** submitted to the Solana Graveyard Hackathon 2026. It is provided strictly for demonstration and evaluation purposes.
 
 - The interface operates on **Solana devnet only** — no real assets are involved; devnet SOL and devnet tokens have no monetary value
-- DAO creation runs **three real on-chain transactions** (TX1: mint $TICK, TX2: createRealm + deposit, TX3: createGovernance + createProposal + signOff) — these are confirmed on Solana devnet
-- Proposal voting (castVote CPI) is **not yet wired** to real on-chain calls — vote buttons update React state only; this ships in Phase 2
+- DAO creation runs **three real on-chain transactions** (TX1: mint $TICK, TX2: createRealm + deposit, TX3: createGovernance + 3 proposals + signOff) — these are confirmed on Solana devnet
+- Proposal voting runs **real on-chain `castVote` CPI calls** — each vote creates a `VoteRecordV2` PDA on Solana devnet; your wallet address is permanently recorded as the voter
+- Token locking runs **real on-chain `depositGoverningTokens` CPI calls** — tokens are deposited into SPL-Governance on devnet
+- The RWA finance calculator is a **UI-only tool** — it computes loan/repayment/yield figures but does not submit any transaction; TICKS protocol disbursement ships Phase 3
 - The software is provided "as is" under the MIT License without warranty of any kind
 
 Do not use this interface in connection with real funds, mainnet tokens, or binding legal decisions without independent review.
@@ -45,7 +47,7 @@ The ve$TICK token model, governance configurations, and protocol parameters desc
 
 ## 4. Blockchain Interactions
 
-When TIX-DAO integrates with real on-chain transactions (Phase 2+), the following applies:
+TIX-DAO runs real on-chain transactions on Solana devnet. The following applies:
 
 - **Irreversibility:** Transactions on Solana are irreversible once confirmed. TIX-DAO cannot reverse, cancel, or modify any on-chain transaction.
 - **Wallet responsibility:** You are solely responsible for the security of your wallet private keys. TIX-DAO never requests, stores, or transmits private keys. All signing occurs within your browser wallet extension.
@@ -60,7 +62,7 @@ You may use TIX-DAO to:
 
 - Explore the governance UI and evaluate its design
 - Deploy real governance Realms on Solana devnet (TX1/TX2/TX3) for demonstration and evaluation purposes — devnet has no monetary value
-- Vote on proposals for demonstration purposes (voting updates local state; castVote CPI ships Phase 2)
+- Vote on proposals on-chain — each vote creates a `VoteRecordV2` PDA on Solana devnet
 - Fork, modify, and build upon the codebase under the terms of the MIT License
 
 You may not use TIX-DAO to:
@@ -93,7 +95,7 @@ To the maximum extent permitted by applicable law, Orthonode Infrastructure Labs
 - Loss of tokens, digital assets, or funds of any kind
 - Loss of data or governance records
 - Any indirect, incidental, special, consequential, or punitive damages
-- Any damages arising from reliance on simulated governance interactions as binding
+- Any damages arising from reliance on devnet governance interactions as binding mainnet or legal governance
 
 ---
 

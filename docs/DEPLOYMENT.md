@@ -217,11 +217,12 @@ After deploying (locally or to Vercel), run through this checklist:
 - [ ] Without wallet: yellow warning "WALLET NOT CONNECTED" appears
 - [ ] With wallet: token mint field shows truncated public key
 - [ ] Entering a venue name and clicking deploy: log lines stream, success screen appears
-- [ ] `/proposals` loads three proposals with block-character progress bars
-- [ ] Without wallet: "connect wallet to cast your vote" hint appears
-- [ ] With wallet: clicking `[ Vote Yes ]` updates the bar and locks the button
+- [ ] `/proposals` without realm URL params: shows "NO DAO CONNECTED" panel with link to `/create`
+- [ ] `/proposals` with realm URL params: shows 3 proposals with block-character progress bars
+- [ ] Without wallet: vote buttons are disabled; hint to connect wallet shown
+- [ ] With wallet + realm params: clicking `[ Vote Yes ]` sends real castVote tx → Explorer link appears
 - [ ] `/finance` loads revenue + advance inputs; typing numbers updates loan/repayment/yield live
-- [ ] Clicking Request Advance shows loading then mock term sheet
+- [ ] With wallet connected + values entered: clicking Request Advance shows term sheet immediately (no loading delay)
 
 ---
 

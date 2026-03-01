@@ -125,10 +125,13 @@ We believe in honest security disclosure. The following limitations exist in the
 
 | Item | Status | Implication |
 |---|---|---|
-| DAO creation (TX1/TX2/TX3) | ✅ Real on-chain | All three transactions confirmed on Solana devnet |
+| DAO creation (TX1/TX2/TX3) | ✅ Real on-chain | TX1 mint $TICK · TX2 createRealm+deposit · TX3 createGovernance+3 proposals+signOff — all confirmed on Solana devnet |
 | On-chain transaction construction | ✅ Reviewed | `governanceActions.ts` uses bytes-based program ID (SES-safe); deterministic governance PDA via `SystemProgram.programId` |
-| Voting (castVote CPI) | ⚠️ Phase 2 | Vote buttons update React state only; real `castVoteOnProposal` is implemented in `governanceActions.ts` but not yet wired to the proposals UI |
-| ve$TICK escrow | ⚠️ Phase 2 | Lock duration cards are live UI only; escrow contract not yet deployed |
+| Voting (castVote CPI) | ✅ Real on-chain | `castVoteOnProposal` wired to proposals UI for all 3 proposals; each vote creates a `VoteRecordV2` PDA on devnet |
+| Token locking | ✅ Real on-chain | `lockTokens` calls `depositGoverningTokens` CPI; tokens deposited into SPL-Governance on devnet |
+| RWA finance calculator | ⚠️ Phase 3 | UI-only calculator; TICKS protocol disbursement ships Phase 3 |
+| ve$TICK escrow | ⚠️ Phase 2 | Lock duration UI is live; custom escrow contract with time-weighted multipliers ships Phase 2 |
+| Live proposal deserialization | ⚠️ Phase 2 | Proposals loaded from URL params; full `getGovernanceAccounts` subscription ships Phase 2 |
 | No audit of `governanceActions.ts` | Phase 2 scope | Added post-initial-audit; see informational note 5.1 in AUDIT.md |
 | Public devnet RPC | Rate-limited | Not suitable for high-traffic production |
 | Council multi-sig | ⚠️ Phase 2 | Emergency veto mechanism exists in design only |
@@ -163,7 +166,7 @@ If you discover a security vulnerability in TIX-DAO:
 - Out of scope: the SPL-Governance program itself (report those via [Immunefi's Solana Labs program](https://immunefi.com/bug-bounty/solanafoundation/)), Phantom/Solflare wallets, Solana core protocol
 
 **Note on current build:**
-TIX-DAO now runs real SPL-Governance transactions on Solana devnet (TX1: mint, TX2: createRealm, TX3: createGovernance+Proposal). Devnet assets have no real-world value. Responsible disclosure is appreciated; it becomes strictly binding when Phase 2 ships castVote and the ve$TICK escrow contract on mainnet.
+TIX-DAO runs real SPL-Governance transactions on Solana devnet: TX1 mint, TX2 createRealm+deposit, TX3 createGovernance+3 proposals+signOff, castVote (all 3 proposals), and depositGoverningTokens (lock page). Devnet assets have no real-world value. Responsible disclosure is appreciated; it becomes strictly binding when Phase 2 ships the ve$TICK escrow contract and when Phase 4 deploys to mainnet.
 
 ---
 

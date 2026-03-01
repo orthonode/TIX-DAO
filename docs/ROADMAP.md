@@ -25,8 +25,8 @@ Everything in this phase is built and running at the demo URL.
 - [x] Home screen — graveyard narrative, hero, dead-project table
 - [x] Lock Tokens screen — four ve$TICK duration cards (30d 1× · 90d 2× · 180d 3× · 365d 4×), live voting power calc
 - [x] Create DAO screen — venue name, quorum %, real 3-TX on-chain deploy (TX1 mint · TX2 realm · TX3 governance+proposal)
-- [x] Proposals screen — 3 governance proposals with YES/NO voting (vote state in React; castVote CPI ships Phase 2)
-- [x] Finance screen — RWA advance calculator (loan amount, repayment, lender yield), mock term sheet
+- [x] Proposals screen — 3 governance proposals with real on-chain YES/NO voting; each vote creates `VoteRecordV2` PDA on devnet; Explorer tx link shown per vote
+- [x] Finance screen — RWA advance calculator (loan amount, repayment, lender yield), draft term sheet (UI only — no on-chain call; TICKS disbursement ships Phase 3)
 - [x] Responsive Navbar — window chrome, active route indicators, Wallet Multi Button
 - [x] Shared Footer component — Orthonode credit, optional governance note
 - [x] Custom 404 page — terminal aesthetic, proper HTTP 404 status
@@ -56,15 +56,12 @@ Everything in this phase is built and running at the demo URL.
 
 **Timeline:** Month 1–2 post-hackathon
 
-Phase 1 shipped real on-chain DAO creation (TX1/TX2/TX3 confirmed on devnet). Phase 2 replaces the remaining simulated interactions — casting votes and locking tokens — with real CPI calls, and ships a working governance product any venue can use.
+Phase 1 shipped real on-chain DAO creation (TX1/TX2/TX3), real castVote for all 3 proposals, and real token locking — all confirmed on devnet. Phase 2 adds live account deserialization, the ve$TICK escrow contract, and ecosystem integration.
 
 ### Goals
 
-**Real `castVote` transactions** *(next priority)*
-Replace the React state update in `proposals/page.tsx` with real `castVote` calls using `castVoteOnProposal` (already implemented in `governanceActions.ts`). Wire the proposal/realm/governance addresses from the create flow URL params. Implement VoteRecordV2 deduplication check so the UI reflects whether a wallet has already voted.
-
-**Live proposal deserialization**
-Replace the hardcoded proposals in `proposals/page.tsx` with real `getGovernanceAccounts` calls against the devnet. Subscribe to account changes via WebSocket for real-time vote count updates.
+**Live proposal deserialization** *(next priority)*
+Replace URL-param-based proposal loading in `proposals/page.tsx` with real `getGovernanceAccounts` calls against the devnet. Subscribe to account changes via WebSocket for real-time vote count updates. Display actual on-chain vote tallies rather than baseline+delta counts.
 
 **$TICK airdrop faucet**
 Add a faucet page so demo participants can receive $TICK and participate in governance without deploying their own DAO. Already created on deploy; airdrop endpoint needed.
@@ -78,9 +75,6 @@ Build the locking escrow using Anchor:
 
 **Integration with app.realms.today**
 Submit the TIX-DAO Realm to the Realms directory. Users will be able to access the Realm via both the TIX-DAO UI and the standard Realms UI — they share the same on-chain state.
-
-**Proposal fetching from chain**
-Replace `MOCK_PROPOSALS` array with real account deserialization using `getGovernanceAccounts` from `@solana/spl-governance`. Subscribe to account changes via WebSocket for real-time vote count updates.
 
 ---
 

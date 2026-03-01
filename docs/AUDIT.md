@@ -14,12 +14,12 @@
 | Field | Value |
 |---|---|
 | **Project** | TIX-DAO |
-| **Version** | 1.1.0 |
+| **Version** | 1.2.0 |
 | **Initial Audit Date** | 2026-02-27 (commit `3e73997`) |
-| **Post-Audit Review** | 2026-03-01 (commit `b612179` — `governanceActions.ts` added) |
+| **Post-Audit Review** | 2026-03-01 (commit `a5ef31a` — real voting + simulation removal) |
 | **Auditor** | Internal — Orthonode Infrastructure Labs |
 | **Audit Type** | Security Code Review (full codebase) |
-| **Commit Reviewed** | `b612179` (HEAD, `main`) |
+| **Commit Reviewed** | `a5ef31a` (HEAD, `main`) |
 | **Scope** | All source files under `src/`, `public/`, `next.config.ts`, `.env*` |
 | **Methodology** | Static analysis — manual code review + automated pattern scanning |
 | **Result** | ✅ **No exploitable vulnerabilities found** |
@@ -81,8 +81,8 @@ TIX-DAO is a **frontend-only** Next.js application. There is no backend server, 
 │  TIX-DAO Next.js app (static export)        │
 │  ├── User inputs → React state only         │
 │  ├── Wallet interactions → browser extension│
-│  └── RPC calls → Solana devnet (read-only   │
-│                   in MVP)                   │
+│  └── RPC calls → Solana devnet (read+write) │
+│                   TX1/TX2/TX3/vote/lock     │
 └──────────────────────┬──────────────────────┘
                        │ JSON-RPC (read-only)
                        ▼
@@ -259,25 +259,29 @@ No issues met the threshold of >80% confidence of actual exploitability.
 
 These items are **not** vulnerabilities but are noted for completeness.
 
-### 5.1 Real On-Chain Transactions Added Post-Audit (2026-03-01)
+### 5.1 Real On-Chain Transactions — Post-Audit Additions (2026-03-01)
 
-After the initial audit at commit `3e73997`, the file `src/lib/governanceActions.ts` was added containing real SPL-Governance CPI calls:
+After the initial audit at commit `3e73997`, the file `src/lib/governanceActions.ts` was added and subsequently updated to wire all on-chain functionality. The full set of real CPI calls now in production:
 
 - **TX1** — `createTickMint`: mints a fresh $TICK SPL token via `SystemProgram.createAccount` + `createInitializeMint2Instruction`
-- **TX2** — `createRealmWithDeposit`: calls `withCreateRealm` + `withDepositGoverningTokens`
-- **TX3** — `createGovernanceAndProposal`: calls `withCreateGovernance` + `withCreateProposal` + `withSignOffProposal`
+- **TX2** — `createRealmWithDeposit`: calls `withCreateRealm` + `withDepositGoverningTokens` (creates Realm PDA + TokenOwnerRecord PDA)
+- **TX3** — `createGovernanceAndProposal`: calls `withCreateGovernance` + 3× `withCreateProposal` + 3× `withSignOffProposal` (3 standard TIX-DAO proposals created and signed off in one transaction)
+- **castVoteOnProposal**: calls `withCastVote` — wired to all 3 proposals on `/proposals` page; creates `VoteRecordV2` PDA per vote on devnet
+- **lockTokens**: calls `withDepositGoverningTokens` — wired to `/lock` page; deposits tokens into SPL-Governance on devnet
 
-All three transactions are confirmed on Solana devnet (no real funds involved). The file was not in scope of the initial audit.
+All calls are confirmed on Solana devnet (no real funds involved). These files were not in scope of the initial audit.
 
-**Informational findings from post-audit review of `governanceActions.ts`:**
+**Informational findings from post-audit review:**
 
 | # | Issue | Fix Applied |
 |---|---|---|
 | 1 | `new PublicKey(GOVERNANCE_PROGRAM_ID)` would break after Phantom's SES lockdown corrupts `bs58` | Fixed: using pre-computed `Uint8Array` bytes for program ID |
 | 2 | Passing `undefined` to `withCreateGovernance` caused SDK to generate a random keypair per call, creating non-deterministic governance PDAs | Fixed: passing `SystemProgram.programId` explicitly |
 | 3 | Same venue name produces the same realm PDA — re-deploying same name causes `AccountAlreadyInUse` | Fixed: appending first 6 chars of mint address to realm name for uniqueness |
+| 4 | `/proposals` page had hardcoded `MOCK_PROPOSALS` — votes only updated React state, `castVoteOnProposal` not called | Fixed: full rewrite using URL params; real `castVote` CPI called for each of 3 proposals |
+| 5 | `/finance` page used `setTimeout(1800)` to simulate async processing | Fixed: removed; `handleRequest` is synchronous (pure calculator — no on-chain call needed) |
 
-**Recommendation:** A dedicated third-party audit of `governanceActions.ts` is recommended before Phase 2 deployment, particularly when real funds (mainnet) are involved.
+**Recommendation:** A dedicated third-party audit of `governanceActions.ts` is recommended before Phase 4 mainnet deployment, particularly covering the instruction construction and PDA derivation logic.
 
 ### 5.2 Public RPC Endpoint
 `WalletProvider.tsx` connects to `clusterApiUrl('devnet')` — the public Solana devnet RPC. This endpoint is rate-limited and unauthenticated. For production (mainnet), a private RPC endpoint (Helius, QuickNode) should be used. Not a security issue for a devnet demo.

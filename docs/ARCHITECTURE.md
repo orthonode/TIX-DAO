@@ -198,15 +198,16 @@ DAO member with TokenOwnerRecord
 
 ### Vote
 ```
-Token holder visits /proposals
-  → UI reads ProposalV2 accounts from devnet
-  → User clicks Vote Yes / Vote No
-  → wallet.sendTransaction(castVoteInstruction)
+Token holder visits /proposals?realm=…&governance=…&p1=…&p2=…&p3=…&mint=…
+  → URL params identify the on-chain realm, governance, and 3 proposal PDAs
+  → User clicks Vote Yes / Vote No on any of the 3 proposals
+  → castVoteOnProposal() → wallet.sendTransaction(castVoteInstruction)
   → SPL-Governance: creates VoteRecordV2 PDA (prevents re-vote)
   → ProposalV2 vote tallies update on-chain
+  → UI shows Explorer link to confirmed tx signature
   → If quorum reached: state → Succeeded (after cooloff)
 ```
-> **Phase 2:** Live castVote CPI is planned for Phase 2. The `/proposals` page currently reads from mock data seeded by the Create DAO flow; real account deserialization via `getGovernanceAccounts` ships in Phase 2.
+> **Live on devnet.** All 3 proposals are voted on-chain. Each vote creates a `VoteRecordV2` PDA. Proposal data is currently passed via URL params from the Create DAO flow; full `getGovernanceAccounts` subscription for live deserialization ships Phase 2.
 
 ### Execute Proposal
 ```
@@ -239,7 +240,7 @@ src/app/
     page.tsx                  → Client Component — ve$TICK lock duration + voting power calc
   finance/
     layout.tsx                → Server Component — per-page metadata (title: "Venue Finance — RWA Advance")
-    page.tsx                  → Client Component — RWA advance calculator + mock term sheet
+    page.tsx                  → Client Component — RWA advance calculator + draft term sheet (UI only, no tx)
 ```
 
 ### SSR Safety Pattern
@@ -277,10 +278,11 @@ Next.js 16 defaults to Turbopack. TIX-DAO uses `--webpack` explicitly because `@
 | $TICK token mint (TX1) | ✅ Real | Fresh SPL mint per deploy; confirmed on devnet |
 | DAO creation — createRealm (TX2) | ✅ Real | Real SPL-Governance CPI; TokenOwnerRecord PDA created |
 | DAO creation — createGovernance + createProposal (TX3) | ✅ Real | All three instructions in one confirmed devnet tx |
-| Proposal loading | ⚠️ Seeded | Proposal PDA created on-chain; UI reads from create flow state; full deserialization via `getGovernanceAccounts` ships Phase 2 |
-| Casting votes | ⚠️ Phase 2 | React state only; real `castVote` CPI ships Phase 2 |
-| ve$TICK lock UI | ⚠️ Phase 2 | Lock duration cards are live; escrow contract ships Phase 2 |
-| RWA advance | ⚠️ Phase 3 | Calculator live; TICKS protocol integration ships Phase 3 |
+| Proposal loading | ✅ URL params | 3 proposal PDAs passed via URL from Create DAO; displayed with baseline + real accumulated vote counts; full `getGovernanceAccounts` subscription ships Phase 2 |
+| Casting votes | ✅ Real on-chain | `castVoteOnProposal` wired for all 3 proposals; each vote creates `VoteRecordV2` PDA on devnet |
+| Token locking | ✅ Real on-chain | `lockTokens` calls `depositGoverningTokens`; confirmed on devnet |
+| ve$TICK time-weighting | ⚠️ Phase 2 | Lock duration UI is live; custom escrow with multiplier enforcement ships Phase 2 |
+| RWA advance | ⚠️ Phase 3 | Calculator live; TICKS protocol disbursement ships Phase 3 |
 | Real treasury | ⚠️ Phase 2 | NativeTreasury PDA auto-created by Realms; explicit management UI ships Phase 2 |
 | Council multi-sig | ⚠️ Phase 2 | Planned for Phase 2 |
 

@@ -14,12 +14,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Real `castVote` CPI — on-chain VoteRecordV2 PDAs (Phase 2)
-- Live proposal deserialization via `getGovernanceAccounts` (Phase 2)
-- ve$TICK escrow contract — Anchor program with lock/unlock (Phase 2)
-- TICKS protocol RWA integration — real advance disbursement (Phase 3)
+- Live proposal deserialization via `getGovernanceAccounts` + WebSocket subscription (Phase 2)
+- ve$TICK escrow contract — Anchor program with time-weighted lock/unlock (Phase 2)
+- $TICK airdrop faucet — so demo participants can vote without deploying their own DAO (Phase 2)
 - Council multi-sig deployment (Phase 2)
+- TICKS protocol RWA integration — real advance disbursement (Phase 3)
 - Mainnet launch (Phase 4)
+
+---
+
+## [1.2.0] — 2026-03-01 — Real On-Chain Voting, All Simulations Removed
+
+### Added
+- **Real castVote for all 3 proposals** — `castVoteOnProposal` wired to `/proposals` page; each vote calls `withCastVote` and creates a `VoteRecordV2` PDA on Solana devnet
+- Per-proposal Explorer tx link shown in UI after successful vote
+- Per-proposal loading, error, and txSig state (independent for each of the 3 proposals)
+- `NoDAO` fallback component shown on `/proposals` when no URL params present (redirects to `/create`)
+- `STANDARD_PROPOSALS` exported constant — same proposal titles used in TX3 creation and proposals UI
+- TX3 now creates and signs off all 3 proposals in a single transaction (was 1 proposal before)
+- Shareable URL now includes `p1`, `p2`, `p3` params for all 3 proposal PDAs
+- Create DAO success screen shows all 3 proposal accounts with individual Explorer links
+
+### Changed
+- `proposals/page.tsx` — complete rewrite: removes `MOCK_PROPOSALS`; reads all 3 proposal PDAs from URL params; `castVoteOnProposal` called per-proposal
+- `finance/page.tsx` — removed `setTimeout(1800)` simulation; `handleRequest` is now synchronous (pure calculator, no on-chain call needed)
+- `create/page.tsx` — updated `SuccessState` to `proposalPks: [string, string, string]`; updated shareable URL and accounts display
+
+### Fixed
+- Finance page: fake async loading delay removed — term sheet appears instantly on submit
 
 ---
 
@@ -28,9 +50,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **TX1** — `createTickMint`: mints a fresh $TICK SPL token to the deploying wallet on every DAO creation
 - **TX2** — `createRealmWithDeposit`: real `withCreateRealm` + `withDepositGoverningTokens` → creates Realm PDA and TokenOwnerRecord PDA on devnet
-- **TX3** — `createGovernanceAndProposal`: real `withCreateGovernance` + `withCreateProposal` + `withSignOffProposal` → governance + genesis proposal live on devnet
-- Explorer links for all 3 transaction signatures and 4 account addresses shown in success screen
-- Shareable `/proposals?realm=…&governance=…&proposal=…&mint=…` URL generated post-deploy
+- **TX3** — `createGovernanceAndProposal`: real `withCreateGovernance` + `withCreateProposal` + `withSignOffProposal` → governance + proposals live on devnet
+- Explorer links for all 3 transaction signatures and account addresses shown in success screen
 - `governanceActions.ts` — full helper module: `createTickMint`, `createRealmWithDeposit`, `createGovernanceAndProposal`, `lockTokens`, `castVoteOnProposal`
 
 ### Fixed

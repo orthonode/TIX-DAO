@@ -206,14 +206,14 @@ Confirming all hackathon requirements are met:
 **Technical requirements:**
 - [x] Solana devnet (not mainnet, not local validator)
 - [x] SPL-Governance program address used: `GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw`
-- [x] Real on-chain transactions: TX1 mint · TX2 createRealm+deposit · TX3 createGovernance+createProposal+signOff
+- [x] Real on-chain transactions: TX1 mint · TX2 createRealm+deposit · TX3 createGovernance+3×createProposal+3×signOff · castVoteOnProposal (all 3 proposals) · depositGoverningTokens (lock)
 - [x] Wallet connection via Wallet Standard (Phantom/Solflare compatible)
 - [x] Five UI screens: Home · Lock Tokens (ve$TICK) · Create DAO · Proposals · Finance (RWA)
 
 **Realms track requirements:**
 - [x] Uses Realms/SPL-Governance — not a custom governance program
 - [x] Follows canonical Realm structure (community + council governance)
-- [x] Real `withCreateRealm`, `withCreateGovernance`, `withCreateProposal`, `withSignOffProposal` called on devnet
+- [x] Real `withCreateRealm`, `withCreateGovernance`, `withCreateProposal`, `withSignOffProposal`, `withCastVote`, `withDepositGoverningTokens` called on devnet
 - [x] Voter weight mechanism described (ve$TICK plugin design)
 
 **kyd. track requirements:**
