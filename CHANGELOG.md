@@ -5,30 +5,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [1.0.0] — 2026-02-27 — Graveyard Hackathon MVP
+## [1.1.0] — 2026-03-01 — Real On-Chain SPL-Governance
 
 ### Added
-- `/` Home page — graveyard narrative table + hero CTA with terminal boot aesthetic
-- `/lock` ve$TICK lock page — duration cards (30/90/180/365 days), live voting power calculator, success state
-- `/create` Create DAO page — venue name + quorum form, streaming deploy log, success screen
-- `/proposals` Proposals page — three governance proposals, block-character progress bars, one-vote-per-wallet locking
-- `/finance` RWA Finance page — revenue/advance inputs, live loan/repayment/yield calc, mock term sheet
-- `WalletProvider.tsx` — Wallet Standard auto-discovery, `autoConnect`, silent `onError` handler
-- `WalletWrapper.tsx` — SSR-safe dynamic import wrapper (`ssr: false`)
-- `ProposalCard.tsx` — reusable proposal card component (BlockBar + VoteBtn internals)
-- `Navbar.tsx` — sticky terminal nav with macOS window chrome, active-route detection
-- `governance.ts` — env-var constants for SPL-Governance program ID and network
-- Webpack polyfills for Solana Node.js built-ins (`fs`, `os`, `path`, `crypto`)
-- Vercel deployment at https://tix-dao.vercel.app
-- GitHub repository at https://github.com/orthonode/TIX-DAO
-- Full docs suite: ARCHITECTURE · DEPLOYMENT · ROADMAP · CONTRIBUTING · SECURITY · TERMS · PRIVACY · HACKATHON · CHANGELOG
+- Real 3-TX on-chain deploy: TX1 mint $TICK · TX2 createRealm + deposit · TX3 createGovernance + createProposal + signOff — all confirmed on Solana devnet
+- `src/lib/governanceActions.ts` — full on-chain helper module
+- Explorer links for all 3 tx signatures + 4 account addresses on Create DAO success screen
+- Shareable `/proposals?realm=…&governance=…&proposal=…&mint=…` URL post-deploy
 
-### Technical
-- Next.js 16.1.6 App Router with `--webpack` flag (Turbopack conflict with Solana packages)
-- React 19.2.3, TypeScript strict mode
-- SPL-Governance `GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw` on Solana devnet
-- `@solana/spl-governance ^0.3.28` installed, Phase 2 wires real CPI calls
+### Fixed
+- SES lockdown (Phantom): `bs58` corruption fixed by using pre-computed `Uint8Array` bytes for `GOVERNANCE_PROGRAM_ID`
+- Governance PDA collision: `withCreateGovernance` now receives `SystemProgram.programId` instead of `undefined` (SDK was generating a random keypair per call)
+- Realm PDA collision: mint address suffix appended to realm name for uniqueness on repeat deploys
+- Browser webpack polyfills: `Buffer`, `process`, `stream` added to ProvidePlugin
+
+### Changed
+- `bn.js` replaces `@coral-xyz/anchor` BN export (anchor's BN crashes browser bundle)
 
 ---
 
-*TIX-DAO · Solana Graveyard Hackathon 2026 · Built on Realms · by [Orthonode Infrastructure Labs](https://orthonode.xyz) · orthonode.xyz*
+## [1.0.1] — 2026-02-27 — Optimization Pass
+
+### Fixed
+- Division-by-zero bug in `ProposalCard.tsx`
+- Non-null assertion crash in `lock/page.tsx`
+- Missing `min='0'` on finance revenue input
+
+### Added
+- `Footer.tsx` shared component
+- `not-found.tsx` + `NotFoundClient.tsx` custom 404 page
+- Per-page sublayouts for `create/`, `proposals/`, `lock/`, `finance/`
+- OG/Twitter Card metadata in root `layout.tsx`
+- `public/robots.txt`
+
+---
+
+## [1.0.0] — 2026-02-27 — Graveyard Hackathon MVP
+
+### Added
+- All 5 pages: `/` · `/lock` · `/create` · `/proposals` · `/finance`
+- Wallet Standard auto-discovery — Phantom, Solflare, Backpack
+- SSR-safe wallet provider pattern (`WalletWrapper` → `ssr: false`)
+- Webpack fallbacks for Solana Node.js built-ins
+- Vercel deployment at https://tix-dao.vercel.app
+- Full docs suite: ARCHITECTURE · CHANGELOG · DEPLOYMENT · ROADMAP · CONTRIBUTING · SECURITY · TERMS · PRIVACY · HACKATHON · AUDIT
+
+---
+
+Full changelog with implementation details: [`docs/CHANGELOG.md`](./docs/CHANGELOG.md)
+
+*TIX-DAO · by [Orthonode Infrastructure Labs](https://orthonode.xyz)*

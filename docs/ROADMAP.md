@@ -24,8 +24,8 @@ Everything in this phase is built and running at the demo URL.
 - [x] Terminal-aesthetic UI — monochrome black/silver, CRT scanlines, block-character vote bars
 - [x] Home screen — graveyard narrative, hero, dead-project table
 - [x] Lock Tokens screen — four ve$TICK duration cards (30d 1× · 90d 2× · 180d 3× · 365d 4×), live voting power calc
-- [x] Create DAO screen — venue name, quorum %, token mint (simulated deploy)
-- [x] Proposals screen — 3 live proposals with YES/NO voting (simulated on-chain)
+- [x] Create DAO screen — venue name, quorum %, real 3-TX on-chain deploy (TX1 mint · TX2 realm · TX3 governance+proposal)
+- [x] Proposals screen — 3 governance proposals with YES/NO voting (vote state in React; castVote CPI ships Phase 2)
 - [x] Finance screen — RWA advance calculator (loan amount, repayment, lender yield), mock term sheet
 - [x] Responsive Navbar — window chrome, active route indicators, Wallet Multi Button
 - [x] Shared Footer component — Orthonode credit, optional governance note
@@ -41,12 +41,14 @@ Everything in this phase is built and running at the demo URL.
 - [x] SSR-safe dynamic import pattern (`WalletWrapper` → `ssr: false`)
 
 **Infrastructure**
-- [x] `next.config.ts` webpack fallback for Solana Node.js built-ins
-- [x] `NEXT_PUBLIC_GOVERNANCE_PROGRAM_ID` wired to official SPL-Governance devnet address
-- [x] `src/lib/governance.ts` — env-var constants ready for Phase 2 CPI calls
-- [x] `@solana/spl-governance ^0.3.28` installed (ready, not yet called)
-- [x] `@coral-xyz/anchor ^0.32.1` installed (ready, not yet called)
-- [x] Vercel deployment ready
+- [x] `next.config.ts` webpack fallback for Solana Node.js built-ins + `Buffer`/`process`/`stream` ProvidePlugin polyfills
+- [x] `NEXT_PUBLIC_GOVERNANCE_PROGRAM_ID` wired to official SPL-Governance devnet address (`GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw`)
+- [x] `src/lib/governance.ts` — env-var constants, network config
+- [x] `src/lib/governanceActions.ts` — full on-chain helper: `createTickMint`, `createRealmWithDeposit`, `createGovernanceAndProposal`, `lockTokens`, `castVoteOnProposal`
+- [x] `@solana/spl-governance ^0.3.28` — active, wired to all 3 deploy transactions
+- [x] `@coral-xyz/anchor ^0.32.1` installed; `bn.js` used for BN arithmetic (browser-safe)
+- [x] SES lockdown fix — governance program ID stored as pre-computed `Uint8Array` bytes
+- [x] Vercel deployment — live at https://tix-dao.vercel.app
 
 ---
 
@@ -54,35 +56,18 @@ Everything in this phase is built and running at the demo URL.
 
 **Timeline:** Month 1–2 post-hackathon
 
-Replace every simulated interaction with real on-chain calls. This phase ships a working governance product that any venue can use today.
+Phase 1 shipped real on-chain DAO creation (TX1/TX2/TX3 confirmed on devnet). Phase 2 replaces the remaining simulated interactions — casting votes and locking tokens — with real CPI calls, and ships a working governance product any venue can use.
 
 ### Goals
 
-**Real `createRealm` on Solana Devnet**
-Replace the `setTimeout` mock in `create/page.tsx` with a real `createRealm` instruction using `@solana/spl-governance`:
-```typescript
-import { withCreateRealm } from '@solana/spl-governance';
+**Real `castVote` transactions** *(next priority)*
+Replace the React state update in `proposals/page.tsx` with real `castVote` calls using `castVoteOnProposal` (already implemented in `governanceActions.ts`). Wire the proposal/realm/governance addresses from the create flow URL params. Implement VoteRecordV2 deduplication check so the UI reflects whether a wallet has already voted.
 
-const instructions: TransactionInstruction[] = [];
-await withCreateRealm(
-  instructions,
-  GOVERNANCE_PROGRAM_ID,
-  PROGRAM_VERSION,
-  venueName,
-  walletPublicKey,  // realm authority
-  tickMint,         // community token mint
-  walletPublicKey,  // payer
-  councilMint,      // optional council
-  communityMintMaxVoteWeightSource,
-  minCommunityWeightToCreateGovernance,
-);
-```
+**Live proposal deserialization**
+Replace the hardcoded proposals in `proposals/page.tsx` with real `getGovernanceAccounts` calls against the devnet. Subscribe to account changes via WebSocket for real-time vote count updates.
 
-**Real `castVote` transactions**
-Replace the React state update in `proposals/page.tsx` with real `castVote` calls. Implement VoteRecordV2 deduplication check so the UI reflects whether a wallet has already voted.
-
-**Real $TICK token minting**
-Deploy a devnet SPL token mint for $TICK. Implement an airdrop faucet page for demo purposes so judges can receive $TICK and participate in governance without buying anything.
+**$TICK airdrop faucet**
+Add a faucet page so demo participants can receive $TICK and participate in governance without deploying their own DAO. Already created on deploy; airdrop endpoint needed.
 
 **Real ve$TICK escrow contract**
 Build the locking escrow using Anchor:

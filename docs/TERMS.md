@@ -7,7 +7,7 @@
 [![Status](https://img.shields.io/badge/Status-Live-22C55E.svg)](https://tix-dao.vercel.app)
 [![By](https://img.shields.io/badge/By-Orthonode%20Labs-orange.svg)](https://orthonode.xyz)
 
-**Effective date:** 2026-02-27
+**Effective date:** 2026-03-01
 **Operator:** Orthonode Infrastructure Labs · orthonode.xyz · Bhopal, Madhya Pradesh, India
 
 ---
@@ -22,8 +22,9 @@ By accessing or using TIX-DAO at [https://tix-dao.vercel.app](https://tix-dao.ve
 
 TIX-DAO is a **hackathon prototype** submitted to the Solana Graveyard Hackathon 2026. It is provided strictly for demonstration and evaluation purposes.
 
-- The interface operates on **Solana devnet only** — no real assets are involved
-- Governance interactions (DAO creation, proposal voting) are **simulated** — no real on-chain transactions are broadcast in the current MVP
+- The interface operates on **Solana devnet only** — no real assets are involved; devnet SOL and devnet tokens have no monetary value
+- DAO creation runs **three real on-chain transactions** (TX1: mint $TICK, TX2: createRealm + deposit, TX3: createGovernance + createProposal + signOff) — these are confirmed on Solana devnet
+- Proposal voting (castVote CPI) is **not yet wired** to real on-chain calls — vote buttons update React state only; this ships in Phase 2
 - The software is provided "as is" under the MIT License without warranty of any kind
 
 Do not use this interface in connection with real funds, mainnet tokens, or binding legal decisions without independent review.
@@ -58,15 +59,15 @@ When TIX-DAO integrates with real on-chain transactions (Phase 2+), the followin
 You may use TIX-DAO to:
 
 - Explore the governance UI and evaluate its design
-- Vote on simulated proposals for demonstration purposes
-- Deploy simulated DAO configurations for evaluation
+- Deploy real governance Realms on Solana devnet (TX1/TX2/TX3) for demonstration and evaluation purposes — devnet has no monetary value
+- Vote on proposals for demonstration purposes (voting updates local state; castVote CPI ships Phase 2)
 - Fork, modify, and build upon the codebase under the terms of the MIT License
 
 You may not use TIX-DAO to:
 
 - Conduct or facilitate any activity that violates applicable law
 - Attempt to exploit, attack, or disrupt the Solana network or any other blockchain protocol
-- Misrepresent simulated governance interactions as real on-chain governance
+- Misrepresent on-chain devnet governance as binding mainnet governance or legal governance for real organizations
 - Impersonate Orthonode Infrastructure Labs or TIX-DAO in any context
 
 ---

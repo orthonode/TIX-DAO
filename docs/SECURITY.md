@@ -29,12 +29,12 @@ TIX-DAO is a governance interface sitting on top of SPL-Governance. The relevant
 
 ## 2. Flash Loan Attack Protection
 
-The $182M Beanstalk Farms exploit (April 2022) is the canonical example of flash loan governance attack. The attacker:
-1. Took a flash loan large enough for a governance supermajority
+The **$182M Beanstalk Farms exploit (April 2022)** is the canonical example of flash loan governance attack. The attacker:
+1. Took a flash loan on Ethereum large enough for a governance supermajority
 2. Deposited tokens, immediately voted on a pre-staged malicious proposal
 3. Executed the proposal (which drained the treasury to their address)
 4. Repaid the flash loan
-5. All within a single Solana transaction
+5. All within a single Ethereum transaction — start to finish in seconds
 
 TIX-DAO's governance configuration is designed specifically to make this attack path impossible:
 
@@ -119,21 +119,21 @@ The full dependency tree is locked in `package-lock.json`. All production depend
 
 ---
 
-## 6. Known Limitations
+## 6. Known Limitations (as of 2026-03-01)
 
-We believe in honest security disclosure. The following limitations exist in the current MVP:
+We believe in honest security disclosure. The following limitations exist in the current build:
 
 | Item | Status | Implication |
 |---|---|---|
-| Voting is simulated | React state only | No real on-chain votes are cast in the MVP |
-| DAO creation is simulated | `setTimeout` mock | No real Realm is deployed in the MVP |
-| ve$TICK escrow | Not yet built | Lock-based flash loan protection is not yet enforced |
-| No audit of custom code | Phase 2 scope | The ve$TICK contract will require audit before mainnet |
+| DAO creation (TX1/TX2/TX3) | ✅ Real on-chain | All three transactions confirmed on Solana devnet |
+| On-chain transaction construction | ✅ Reviewed | `governanceActions.ts` uses bytes-based program ID (SES-safe); deterministic governance PDA via `SystemProgram.programId` |
+| Voting (castVote CPI) | ⚠️ Phase 2 | Vote buttons update React state only; real `castVoteOnProposal` is implemented in `governanceActions.ts` but not yet wired to the proposals UI |
+| ve$TICK escrow | ⚠️ Phase 2 | Lock duration cards are live UI only; escrow contract not yet deployed |
+| No audit of `governanceActions.ts` | Phase 2 scope | Added post-initial-audit; see informational note 5.1 in AUDIT.md |
 | Public devnet RPC | Rate-limited | Not suitable for high-traffic production |
-| No rate limiting on frontend | Not applicable | No backend to rate-limit |
-| Council multi-sig | Not yet deployed | Emergency veto mechanism exists in design only |
+| Council multi-sig | ⚠️ Phase 2 | Emergency veto mechanism exists in design only |
 
-These limitations are acceptable for a hackathon MVP. They will be addressed in Phase 2 before the protocol handles real funds.
+The on-chain transaction construction (`governanceActions.ts`) will be included in the next audit cycle before Phase 2 mainnet deployment.
 
 ---
 
@@ -162,8 +162,8 @@ If you discover a security vulnerability in TIX-DAO:
 - In scope: the TIX-DAO frontend, the ve$TICK escrow contract (once deployed), any TIX-DAO-specific configuration of SPL-Governance
 - Out of scope: the SPL-Governance program itself (report those via [Immunefi's Solana Labs program](https://immunefi.com/bug-bounty/solanafoundation/)), Phantom/Solflare wallets, Solana core protocol
 
-**Note on the MVP:**
-Responsible disclosure for a hackathon prototype is appreciated but not critical — the MVP does not handle real funds. Once Phase 2 ships with real on-chain transactions, this responsible disclosure process becomes binding.
+**Note on current build:**
+TIX-DAO now runs real SPL-Governance transactions on Solana devnet (TX1: mint, TX2: createRealm, TX3: createGovernance+Proposal). Devnet assets have no real-world value. Responsible disclosure is appreciated; it becomes strictly binding when Phase 2 ships castVote and the ve$TICK escrow contract on mainnet.
 
 ---
 

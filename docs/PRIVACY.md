@@ -7,7 +7,7 @@
 [![Status](https://img.shields.io/badge/Status-Live-22C55E.svg)](https://tix-dao.vercel.app)
 [![By](https://img.shields.io/badge/By-Orthonode%20Labs-orange.svg)](https://orthonode.xyz)
 
-**Effective date:** 2026-02-27
+**Effective date:** 2026-03-01
 **Operator:** Orthonode Infrastructure Labs · orthonode.xyz · Bhopal, Madhya Pradesh, India
 
 ---
@@ -46,13 +46,21 @@ The wallet connection is handled entirely by your browser extension. TIX-DAO cal
 
 ## 4. On-Chain Data
 
-When real on-chain transactions are supported (Phase 2+):
+**DAO creation writes real data to Solana devnet.** When you click "Deploy" on the Create DAO page:
 
-- Votes cast, proposals created, and DAO configurations are recorded permanently and publicly on the Solana blockchain
-- Blockchain data is public by design — your wallet address and voting history will be visible to anyone querying the Solana network
-- TIX-DAO cannot delete on-chain data. Blockchain records are immutable.
+- **TX1** creates a new SPL token mint account on devnet (your wallet address is the mint authority — this is public)
+- **TX2** creates a Realm PDA and a TokenOwnerRecord PDA on devnet (your wallet address is recorded as realm authority and governing token depositor — this is public)
+- **TX3** creates a GovernanceAccount PDA and a ProposalV2 PDA on devnet (your wallet address is recorded as proposal creator — this is public)
 
-In the current MVP (Phase 1), all governance interactions are simulated in browser state only. Nothing is written to the blockchain.
+These are **Solana devnet transactions**. Devnet is a public test network — wallet addresses, transaction signatures, and account data are visible to anyone querying the Solana devnet network or using the Solana Explorer.
+
+Devnet data is not financially sensitive (devnet SOL has no value), but your wallet address is permanently associated with the transactions you sign.
+
+Blockchain data is public and immutable by design. TIX-DAO cannot delete on-chain records.
+
+**Proposal voting** (castVote CPI) is not yet wired to real on-chain calls — vote buttons currently update browser state only and write nothing to the blockchain. This changes in Phase 2.
+
+**Mainnet** is not used. No real funds or mainnet assets are involved.
 
 ---
 

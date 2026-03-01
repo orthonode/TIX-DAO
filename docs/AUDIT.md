@@ -14,11 +14,12 @@
 | Field | Value |
 |---|---|
 | **Project** | TIX-DAO |
-| **Version** | 1.0.1 |
-| **Audit Date** | 2026-02-27 |
+| **Version** | 1.1.0 |
+| **Initial Audit Date** | 2026-02-27 (commit `3e73997`) |
+| **Post-Audit Review** | 2026-03-01 (commit `b612179` — `governanceActions.ts` added) |
 | **Auditor** | Internal — Orthonode Infrastructure Labs |
 | **Audit Type** | Security Code Review (full codebase) |
-| **Commit Reviewed** | `3e73997` (HEAD, `main`) |
+| **Commit Reviewed** | `b612179` (HEAD, `main`) |
 | **Scope** | All source files under `src/`, `public/`, `next.config.ts`, `.env*` |
 | **Methodology** | Static analysis — manual code review + automated pattern scanning |
 | **Result** | ✅ **No exploitable vulnerabilities found** |
@@ -52,6 +53,7 @@ This audit covers the entire TIX-DAO codebase at commit `3e73997`. All source fi
 | `src/components/ProposalCard.tsx` | Client Component | Proposal card UI |
 | `src/components/Footer.tsx` | Client Component | Shared footer |
 | `src/lib/governance.ts` | Library | Program ID + network constants |
+| `src/lib/governanceActions.ts` | Library | **Added post-initial-audit (2026-03-01)** — on-chain helpers: createTickMint, createRealmWithDeposit, createGovernanceAndProposal, lockTokens, castVoteOnProposal |
 | `next.config.ts` | Config | Webpack fallbacks |
 | `public/robots.txt` | Static | Crawler directives |
 | `.env.local` | Environment | Runtime config |
@@ -257,8 +259,25 @@ No issues met the threshold of >80% confidence of actual exploitability.
 
 These items are **not** vulnerabilities but are noted for completeness.
 
-### 5.1 Simulated On-Chain Interactions
-All governance interactions in the MVP (DAO creation, voting, token locking, advance requests) are simulated with `setTimeout` mocks. There is no risk of unintended on-chain transactions in Phase 1. When Phase 2 wires real `createRealm` and `castVote` instructions, a separate audit of the transaction construction code is recommended before mainnet deployment.
+### 5.1 Real On-Chain Transactions Added Post-Audit (2026-03-01)
+
+After the initial audit at commit `3e73997`, the file `src/lib/governanceActions.ts` was added containing real SPL-Governance CPI calls:
+
+- **TX1** — `createTickMint`: mints a fresh $TICK SPL token via `SystemProgram.createAccount` + `createInitializeMint2Instruction`
+- **TX2** — `createRealmWithDeposit`: calls `withCreateRealm` + `withDepositGoverningTokens`
+- **TX3** — `createGovernanceAndProposal`: calls `withCreateGovernance` + `withCreateProposal` + `withSignOffProposal`
+
+All three transactions are confirmed on Solana devnet (no real funds involved). The file was not in scope of the initial audit.
+
+**Informational findings from post-audit review of `governanceActions.ts`:**
+
+| # | Issue | Fix Applied |
+|---|---|---|
+| 1 | `new PublicKey(GOVERNANCE_PROGRAM_ID)` would break after Phantom's SES lockdown corrupts `bs58` | Fixed: using pre-computed `Uint8Array` bytes for program ID |
+| 2 | Passing `undefined` to `withCreateGovernance` caused SDK to generate a random keypair per call, creating non-deterministic governance PDAs | Fixed: passing `SystemProgram.programId` explicitly |
+| 3 | Same venue name produces the same realm PDA — re-deploying same name causes `AccountAlreadyInUse` | Fixed: appending first 6 chars of mint address to realm name for uniqueness |
+
+**Recommendation:** A dedicated third-party audit of `governanceActions.ts` is recommended before Phase 2 deployment, particularly when real funds (mainnet) are involved.
 
 ### 5.2 Public RPC Endpoint
 `WalletProvider.tsx` connects to `clusterApiUrl('devnet')` — the public Solana devnet RPC. This endpoint is rate-limited and unauthenticated. For production (mainnet), a private RPC endpoint (Helius, QuickNode) should be used. Not a security issue for a devnet demo.
@@ -280,7 +299,7 @@ The TIX-DAO codebase at commit `3e73997` presents **no exploitable security vuln
 
 The frontend-only architecture minimizes attack surface significantly. The primary security considerations for this project lie in the on-chain program layer (SPL-Governance, future ve$TICK escrow), which is either externally audited (SPL-Governance) or not yet built (Phase 2+).
 
-**Security posture: SECURE for MVP / Hackathon submission.**
+**Security posture: SECURE for MVP / Hackathon submission.** The post-audit addition of `governanceActions.ts` introduced and immediately fixed three informational issues (see §5.1). A separate third-party audit of the on-chain transaction construction code is recommended before mainnet deployment.
 
 ---
 

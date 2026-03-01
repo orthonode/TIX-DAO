@@ -14,13 +14,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Real `createRealm` CPI via `@solana/spl-governance` (Phase 2)
 - Real `castVote` CPI — on-chain VoteRecordV2 PDAs (Phase 2)
+- Live proposal deserialization via `getGovernanceAccounts` (Phase 2)
 - ve$TICK escrow contract — Anchor program with lock/unlock (Phase 2)
-- $TICK SPL token mint (Phase 2)
 - TICKS protocol RWA integration — real advance disbursement (Phase 3)
 - Council multi-sig deployment (Phase 2)
 - Mainnet launch (Phase 4)
+
+---
+
+## [1.1.0] — 2026-03-01 — Real On-Chain SPL-Governance
+
+### Added
+- **TX1** — `createTickMint`: mints a fresh $TICK SPL token to the deploying wallet on every DAO creation
+- **TX2** — `createRealmWithDeposit`: real `withCreateRealm` + `withDepositGoverningTokens` → creates Realm PDA and TokenOwnerRecord PDA on devnet
+- **TX3** — `createGovernanceAndProposal`: real `withCreateGovernance` + `withCreateProposal` + `withSignOffProposal` → governance + genesis proposal live on devnet
+- Explorer links for all 3 transaction signatures and 4 account addresses shown in success screen
+- Shareable `/proposals?realm=…&governance=…&proposal=…&mint=…` URL generated post-deploy
+- `governanceActions.ts` — full helper module: `createTickMint`, `createRealmWithDeposit`, `createGovernanceAndProposal`, `lockTokens`, `castVoteOnProposal`
+
+### Fixed
+- **SES lockdown** (Phantom wallet): `lockdown-install.js` corrupts `bs58` `BASE_MAP` at runtime, breaking all `new PublicKey(string)` calls. Fix: use pre-computed `Uint8Array` bytes for `GOVERNANCE_PROGRAM_ID` instead of base58 string decode. Module-level constructions (e.g. `TOKEN_PROGRAM_ID`) are unaffected — they run before SES.
+- **Governance PDA collision**: when `withCreateGovernance` receives `undefined` as governed account, the SDK generates a random keypair per call — collides on repeat deploys of the same realm. Fix: pass `SystemProgram.programId` explicitly for a deterministic governance PDA per realm.
+- **Realm PDA collision**: deploying the same venue name twice creates the same realm PDA (already in use). Fix: append the first 6 chars of the mint address to the realm name on-chain; display name in UI remains clean.
+- Browser webpack polyfills: `Buffer`, `process`, `stream` polyfills added to `ProvidePlugin`; `resolve.fallback` set for all Node built-ins required by Solana packages
+
+### Changed
+- `bn.js` replaces `@coral-xyz/anchor`'s `BN` export — anchor's BN crashes the browser bundle
 
 ---
 

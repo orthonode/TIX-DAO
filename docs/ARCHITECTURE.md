@@ -179,13 +179,12 @@ Each venue deploys exactly one Realm with one Community Governance and one Counc
 ### Create DAO
 ```
 User fills form (venue name, quorum %)
-  → wallet.sendTransaction(createRealmInstruction)
-  → SPL-Governance: creates Realm PDA
-  → SPL-Governance: creates GovernanceAccount PDA
-  → SPL-Governance: creates NativeTreasury PDA
-  → UI shows "DAO Deployed" confirmation
+  → TX1: wallet.sendTransaction → mints fresh $TICK SPL token
+  → TX2: wallet.sendTransaction → createRealm + depositGoverningTokens (TokenOwnerRecord PDA)
+  → TX3: wallet.sendTransaction → createGovernance + createProposal + signOffProposal
+  → UI shows "DAO DEPLOYED" with all 3 transaction signatures + account links
 ```
-> **MVP status:** The `handleCreate` function in `src/app/create/page.tsx` currently simulates this with a 2-second `setTimeout`. Real `createRealm` CPI will be wired in Phase 2.
+> **Live on devnet.** All three transactions are real SPL-Governance CPI calls confirmed on Solana devnet. Each deploy creates a unique realm by appending the mint address suffix to the venue name, preventing PDA collisions on repeat deploys.
 
 ### Create Proposal
 ```
@@ -207,7 +206,7 @@ Token holder visits /proposals
   → ProposalV2 vote tallies update on-chain
   → If quorum reached: state → Succeeded (after cooloff)
 ```
-> **MVP status:** The `vote()` function in `src/app/proposals/page.tsx` currently updates React state only. Real `castVote` CPI will be wired in Phase 2.
+> **Phase 2:** Live castVote CPI is planned for Phase 2. The `/proposals` page currently reads from mock data seeded by the Create DAO flow; real account deserialization via `getGovernanceAccounts` ships in Phase 2.
 
 ### Execute Proposal
 ```
@@ -269,21 +268,23 @@ Next.js 16 defaults to Turbopack. TIX-DAO uses `--webpack` explicitly because `@
 
 ---
 
-## 9. Known Limitations (MVP Honesty)
+## 9. Current Status (as of 2026-03-01)
 
 | Feature | Status | Notes |
 |---|---|---|
 | Wallet connection | ✅ Real | Wallet Standard auto-discovery |
 | Devnet RPC connection | ✅ Real | via `clusterApiUrl('devnet')` |
-| DAO creation | ⚠️ Simulated | `setTimeout` mock; no on-chain call |
-| Proposal loading | ⚠️ Simulated | Hardcoded mock data in `proposals/page.tsx` |
-| Casting votes | ⚠️ Simulated | React state only; no `castVote` instruction |
-| RWA advance | ⚠️ Simulated | `/finance` page — TICKS protocol integration ships Phase 3 |
-| ve$TICK lock UI | ✅ Simulated | `/lock` page — escrow contract ships Phase 2 |
-| Real treasury | ⚠️ Not yet built | Planned for Phase 2 |
-| Council multi-sig | ⚠️ Not yet built | Planned for Phase 2 |
+| $TICK token mint (TX1) | ✅ Real | Fresh SPL mint per deploy; confirmed on devnet |
+| DAO creation — createRealm (TX2) | ✅ Real | Real SPL-Governance CPI; TokenOwnerRecord PDA created |
+| DAO creation — createGovernance + createProposal (TX3) | ✅ Real | All three instructions in one confirmed devnet tx |
+| Proposal loading | ⚠️ Seeded | Proposal PDA created on-chain; UI reads from create flow state; full deserialization via `getGovernanceAccounts` ships Phase 2 |
+| Casting votes | ⚠️ Phase 2 | React state only; real `castVote` CPI ships Phase 2 |
+| ve$TICK lock UI | ⚠️ Phase 2 | Lock duration cards are live; escrow contract ships Phase 2 |
+| RWA advance | ⚠️ Phase 3 | Calculator live; TICKS protocol integration ships Phase 3 |
+| Real treasury | ⚠️ Phase 2 | NativeTreasury PDA auto-created by Realms; explicit management UI ships Phase 2 |
+| Council multi-sig | ⚠️ Phase 2 | Planned for Phase 2 |
 
-All simulated flows will be replaced with real SPL-Governance CPI calls in Phase 2 using `@solana/spl-governance ^0.3.28` (already installed) and `@coral-xyz/anchor ^0.32.1`.
+`@solana/spl-governance ^0.3.28` and `@coral-xyz/anchor ^0.32.1` are already installed and active.
 
 ---
 

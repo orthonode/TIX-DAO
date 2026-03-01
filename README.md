@@ -26,13 +26,15 @@
 
 [![TIX-DAO Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red.svg)](https://youtu.be/DAG3S8uOmeE)
 
-> Record using the 3-minute script in [`docs/HACKATHON.md`](./docs/HACKATHON.md).
-
 ---
 
 ## The Problem
 
-Ticketmaster processed $23 billion in 2023 — not from tickets, from controlling the *money flow around* tickets. Service fees, dynamic pricing, resale margins, and royalty decisions are made unilaterally by the platform. Artists have no governance rights over secondary sales of their own work. Fans have no recourse when refund policies change overnight.
+Live Nation posted **record revenue of $23.1 billion in 2024** — up from $22.7 billion in 2023. The DOJ filed an antitrust suit against Live Nation/Ticketmaster in May 2024; the jury trial was scheduled to begin **March 2, 2026**. The court rejected Live Nation's bid for full dismissal in February 2026. The case has not yet produced a verdict.
+
+Service fees, dynamic pricing, resale margins, and royalty decisions are made unilaterally by the platform. Ticketmaster's fees average **27% of ticket face value** (GAO report). Artists have no governance rights over secondary sales of their own work. Fans have no recourse when refund policies change overnight.
+
+The global live events industry was valued at approximately **$88 billion in 2025**. The governance of that money — who gets what percentage, enforced how — is controlled by two or three centralized platforms.
 
 | Before TIX-DAO | With TIX-DAO |
 |---|---|
@@ -46,55 +48,39 @@ Ticketmaster processed $23 billion in 2023 — not from tickets, from controllin
 
 ## The Graveyard
 
-Four projects tried to fix this. All four are dead. Here is what killed them and how TIX-DAO addresses each failure:
+Four projects tried to fix this. All four failed. Here is what killed them and how TIX-DAO addresses each failure:
 
-| Project | Year | Cause of Death | TIX-DAO Fix |
+| Project | Failure Year | Cause of Failure | TIX-DAO Fix |
 |---|---|---|---|
-| **YellowHeart** | 2021–2023 | Royalty bypass — marketplaces dropped enforcement | SPL-Governance proposal enforces royalty at escrow level |
-| **TokenProof** | 2022 | ETH gas $50/check-in — economics impossible at scale | Solana: 100K verifications ≈ $2.50 total |
-| **GET Protocol** | 2018–2023 | No real governance — foundation made all decisions | $TICK token-weighted on-chain voting |
-| **Beanstalk** | 2022 | $182M flash loan attack — no lock, no cooloff | 30-day minimum lock + 7-day cooloff + council veto |
+| **YellowHeart** | 2022 | Royalty bypass — Magic Eden made royalties optional (Oct 2022); artists earned nothing on secondary sales | SPL-Governance proposal enforces royalty at escrow level; no marketplace opt-out |
+| **TokenProof** | 2024 | Ethereum L1 gas — $30–50/verification made the economics impossible at scale; acquired by Yuga Labs Dec 2024, original mission abandoned | Solana: base fee ~$0.0005/tx at current prices; 100K verifications ≈ $50 vs $3M+ on ETH L1 |
+| **GET Protocol** | Ongoing | No real governance — rebranded as OPEN Ticketing Ecosystem; foundation still controls all policy decisions; token holders have no meaningful vote | $TICK token-weighted on-chain voting; every policy decision is a ProposalV2 on devnet |
+| **Beanstalk** | 2022 | $182M flash loan attack — no lock period, no cooloff, no veto; treasury drained in one transaction | 30-day minimum lock + 7-day cooloff + council veto; attack is architecturally impossible |
 
 ---
 
 ## The Solution
 
-TIX-DAO is a purpose-built governance UI for live-event venues on top of Solana's [SPL-Governance (Realms)](https://realms.today) protocol. Each venue deploys its own Realm. Token holders vote on ticketing policy. Policy executes on-chain.
+TIX-DAO is a purpose-built governance UI for live-event venues on top of Solana's [SPL-Governance (Realms)](https://realms.today) protocol. Each venue deploys its own Realm via three real on-chain transactions. Token holders vote on ticketing policy. Policy executes on-chain.
 
-### The Canonical Governance Flow
+### The Canonical Governance Flow (Live on Devnet)
 
 ```typescript
-import { withCreateRealm, withCreateProposal, withCastVote } from '@solana/spl-governance';
-import { GOVERNANCE_PROGRAM_ID } from '@/lib/governance';
+// TX1 — mint fresh $TICK SPL token
+const { mintKeypair } = await createTickMint(connection, wallet);
 
-// 1. Venue deploys their Realm
-const instructions: TransactionInstruction[] = [];
-await withCreateRealm(
-  instructions,
-  new PublicKey(GOVERNANCE_PROGRAM_ID),  // GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
-  2,
-  "House of Blues Chicago",
-  walletPublicKey,   // realm authority
-  tickMint,          // $TICK community token
-  walletPublicKey,   // payer
-  undefined,         // council mint
-  MintMaxVoteWeightSource.FULL_SUPPLY_FRACTION,
-  new BN(1_000_000), // min tokens to create proposals
-);
+// TX2 — deploy Realm + create TokenOwnerRecord PDA
+const { realmPk } = await createRealmWithDeposit(connection, wallet, name, mintKeypair.publicKey);
 
-// 2. Community votes — every vote is a VoteRecordV2 PDA on-chain
-await withCastVote(
-  instructions,
-  new PublicKey(GOVERNANCE_PROGRAM_ID),
-  2,
-  realm, governance, proposal, proposalOwnerRecord,
-  tokenOwnerRecord, walletPublicKey, tickMint,
-  Vote.fromYesNoVote(YesNoVote.Yes),
-  walletPublicKey,
+// TX3 — create Governance + Proposal + sign off (starts voting period)
+const { governancePk, proposalPk } = await createGovernanceAndProposal(
+  connection, wallet, realmPk, mintKeypair.publicKey, proposalTitle, quorumPct,
 );
 ```
 
-> **MVP status:** `@solana/spl-governance ^0.3.28` is installed and the calls above are wired. The MVP uses simulated interactions while real CPI integration ships in Phase 2. See [`docs/ARCHITECTURE.md §9`](./docs/ARCHITECTURE.md) for the full honesty table.
+All three transactions are confirmed on Solana devnet. `@solana/spl-governance ^0.3.28` is wired and active.
+
+> **Note on SES lockdown:** Phantom's `lockdown-install.js` corrupts `bs58` at runtime, breaking `new PublicKey(string)`. TIX-DAO uses pre-computed `Uint8Array` bytes for `GOVERNANCE_PROGRAM_ID` to avoid this. See [`docs/ARCHITECTURE.md §8`](./docs/ARCHITECTURE.md) for details.
 
 ---
 
@@ -102,7 +88,7 @@ await withCastVote(
 
 | Track | Sponsor | Why We Win |
 |---|---|---|
-| **Realms Governance Builders** | Realms | First vertical governance UI for live events; canonical SPL-Governance integration; no custom program |
+| **Realms Governance Builders** | Realms | First vertical governance UI for live events; real SPL-Governance TX1/TX2/TX3 confirmed on devnet; no custom program |
 | **Realms Extensions** | Realms | ve$TICK voter weight plugin — reusable by any Realms DAO, not just TIX-DAO venues |
 | **kyd. Ticketing** | kyd. | Governance layer + RWA financing pipeline on top of TICKS protocol |
 
@@ -137,7 +123,7 @@ Full alignment: [`docs/HACKATHON.md`](./docs/HACKATHON.md)
 │              SPL-GOVERNANCE PROGRAM  (DEVNET)                  │
 │          GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw         │
 │                                                                │
-│  Realm PDA  ("House of Blues Chicago")                         │
+│  Realm PDA  ("House of Blues Chicago-AbCd12")                  │
 │  ├── Community Governance  ($TICK · 20% quorum · 7d cooloff)  │
 │  │   └── ProposalV2 PDAs  (resale cap · royalty · refund)     │
 │  │       └── VoteRecordV2 PDAs  (one per voter)               │
@@ -179,7 +165,7 @@ Full guide — Vercel deploy, custom RPC, troubleshooting: [`docs/DEPLOYMENT.md`
 ## Features
 
 **Home (`/`)**
-- [x] Graveyard narrative — dead-projects table with cause of death and TIX-DAO counter-measure
+- [x] Graveyard narrative — failed-projects table with cause of failure and TIX-DAO counter-measure
 - [x] Hero section with governance CTA
 - [x] Terminal boot-sequence aesthetic with CRT scanlines
 
@@ -190,9 +176,10 @@ Full guide — Vercel deploy, custom RPC, troubleshooting: [`docs/DEPLOYMENT.md`
 
 **Create DAO (`/create`)**
 - [x] Venue name + quorum threshold configuration
-- [x] Wallet pubkey shown as governance token mint
-- [x] Live deploy log streams line-by-line on submit
-- [x] Success screen with confirmation
+- [x] **Real 3-transaction on-chain deploy**: TX1 mint $TICK · TX2 create Realm + TokenOwnerRecord · TX3 create Governance + Proposal + sign off
+- [x] Live deploy log streams line-by-line for each transaction
+- [x] Success screen with all 3 tx signatures linked to Solana Explorer (devnet)
+- [x] Shareable proposals URL generated with realm/governance/proposal/mint address params
 
 **Proposals (`/proposals`)**
 - [x] Three live governance proposals (resale cap · royalty · refund window)
@@ -206,17 +193,19 @@ Full guide — Vercel deploy, custom RPC, troubleshooting: [`docs/DEPLOYMENT.md`
 - [x] Request Advance → mock term sheet with TICKS protocol collateral parameters
 
 **Infrastructure**
+- [x] Real SPL-Governance CPI calls — `withCreateRealm`, `withDepositGoverningTokens`, `withCreateGovernance`, `withCreateProposal`, `withSignOffProposal`
+- [x] SES lockdown fix — governance program ID stored as pre-computed `Uint8Array` bytes
 - [x] Wallet Standard auto-discovery — Phantom, Solflare, Backpack with no explicit registration
 - [x] `autoConnect` with silent error handling — no crash on missing wallet or user rejection
 - [x] SSR-safe wallet provider (`WalletWrapper` → `ssr: false` dynamic import)
-- [x] Webpack polyfills for Solana Node.js built-ins (`fs`, `os`, `path`, `crypto`)
+- [x] Webpack polyfills — `Buffer`, `process`, `stream` (ProvidePlugin) + `fs`, `os`, `path`, `crypto` (fallback)
 - [x] TypeScript strict mode throughout
 
 ---
 
 ## ve$TICK Token Model
 
-The ve$TICK (vote-escrowed $TICK) model rewards long-term stakeholders. Flash loan attacks require a 30-day minimum lock — making governance capture by borrowed capital structurally impossible.
+The ve$TICK (vote-escrowed $TICK) model rewards long-term stakeholders. Flash loan attacks require a 30-day minimum lock — making governance capture by borrowed capital structurally impossible (as proven by the $182M Beanstalk attack on Ethereum in April 2022).
 
 | Lock Duration | Multiplier | Voter Profile |
 |---|---|---|
@@ -262,7 +251,7 @@ tix-dao/
 │   │   ├── page.tsx                Home — graveyard narrative + hero
 │   │   ├── create/
 │   │   │   ├── layout.tsx          Per-page metadata (title: "Create Venue DAO")
-│   │   │   └── page.tsx            Create DAO — form with live deploy log
+│   │   │   └── page.tsx            Create DAO — 3-TX on-chain deploy with live log
 │   │   ├── proposals/
 │   │   │   ├── layout.tsx          Per-page metadata (title: "Proposals")
 │   │   │   └── page.tsx            Proposals — block-bar voting UI
@@ -281,13 +270,16 @@ tix-dao/
 │   │   └── Footer.tsx              Shared footer — Orthonode credit, optional vote note
 │   │
 │   └── lib/
-│       └── governance.ts           Env-var constants — GOVERNANCE_PROGRAM_ID, NETWORK
+│       ├── governance.ts           Env-var constants — GOVERNANCE_PROGRAM_ID, NETWORK
+│       └── governanceActions.ts    On-chain helpers — createTickMint, createRealmWithDeposit,
+│                                   createGovernanceAndProposal, lockTokens, castVoteOnProposal
 │
 ├── public/
 │   └── robots.txt                  Allow all crawlers + sitemap reference
 │
 ├── docs/
 │   ├── ARCHITECTURE.md             Full technical architecture
+│   ├── AUDIT.md                    Security audit report (2026-02-27, zero findings)
 │   ├── CHANGELOG.md                Detailed changelog
 │   ├── DEPLOYMENT.md               Local dev, Vercel, custom RPC, troubleshooting
 │   ├── ROADMAP.md                  4-phase roadmap with honest risks
@@ -297,15 +289,14 @@ tix-dao/
 │   ├── PRIVACY.md                  Privacy policy — no data collected
 │   └── HACKATHON.md                Judges brief — narrative, track alignment, checklist
 │
-├── CHANGELOG.md                    Root changelog (summary, links to docs/CHANGELOG.md)
+├── CHANGELOG.md                    Root changelog (links to docs/CHANGELOG.md)
 ├── CONTRIBUTING.md                 Root contributing guide (links to docs/CONTRIBUTING.md)
 ├── ROADMAP.md                      Root roadmap summary (links to docs/ROADMAP.md)
 ├── SECURITY.md                     Root security policy (links to docs/SECURITY.md)
-├── next.config.ts                  Webpack fallback for fs/os/path/crypto
+├── next.config.ts                  Webpack fallback + ProvidePlugin polyfills
 ├── tailwind.config.ts              Tailwind CSS 4.x content paths
 ├── .env.local                      SOLANA_NETWORK + GOVERNANCE_PROGRAM_ID
 ├── .env.local.example              Template — copy to .env.local
-├── .env.example                    Alias template for contributors
 ├── package.json                    All deps including @solana/spl-governance
 ├── tsconfig.json                   TypeScript strict mode
 ├── README.md                       This file
@@ -318,8 +309,8 @@ tix-dao/
 
 | Phase | Timeline | Focus |
 |---|---|---|
-| **Phase 1 — MVP** | Hackathon ✅ | Full UI, simulated governance, wallet integration, deployed |
-| **Phase 2 — Real On-Chain** | Month 1–2 | Real `createRealm`, real `castVote`, $TICK mint, ve$TICK escrow |
+| **Phase 1 — MVP** | Hackathon ✅ | Full UI, real on-chain TX1/TX2/TX3, wallet integration, deployed |
+| **Phase 2 — Real Voting** | Month 1–2 | Real `castVote` CPI, live proposal deserialization, $TICK faucet, ve$TICK escrow |
 | **Phase 3 — KYD Integration** | Month 3–4 | TICKS RWA protocol, venue financing, artist royalty enforcement |
 | **Phase 4 — Mainnet** | Month 5–6 | Mainnet launch, 10 venue onboarding, $TICK token launch |
 
