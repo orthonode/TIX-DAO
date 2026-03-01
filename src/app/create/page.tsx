@@ -126,9 +126,10 @@ export default function CreatePage() {
     setLog(l => [...l, { text, color }]);
 
   const handleCreate = async () => {
-    if (!connected || !publicKey || !name) return;
-    setLoading(true);
     setLog([]);
+    if (!name) { setLog([{ text: '✗ enter a DAO name first', color: '#cc4444' }]); return; }
+    if (!connected || !publicKey) { setLog([{ text: '✗ wallet not connected', color: '#cc4444' }]); return; }
+    setLoading(true);
     setSuccess(null);
 
     try {
