@@ -5,6 +5,7 @@
 
 **Venue governance on-chain. Ticketing reclaimed.**
 
+[![CI](https://github.com/orthonode/TIX-DAO/actions/workflows/ci.yml/badge.svg)](https://github.com/orthonode/TIX-DAO/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Network](https://img.shields.io/badge/Solana-Devnet-9945FF.svg)](https://solana.com)
 [![Built With](https://img.shields.io/badge/Built%20With-Realms-4F46E5.svg)](https://realms.today)
