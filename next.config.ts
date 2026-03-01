@@ -11,13 +11,12 @@ const nextConfig: NextConfig = {
         crypto: false,
         stream: require.resolve('stream-browserify'),
         buffer: require.resolve('buffer/'),
-        process: require.resolve('process/browser'),
       };
 
+      // Inject Buffer globally in every browser chunk that needs it
       config.plugins.push(
         new webpack.ProvidePlugin({
           Buffer: ['buffer', 'Buffer'],
-          process: 'process/browser',
         }),
       );
     }

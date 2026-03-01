@@ -44,7 +44,12 @@ import {
   TICK_INITIAL_SUPPLY,
 } from './governance';
 
-const PROGRAM_ID = new PublicKey(GOVERNANCE_PROGRAM_ID);
+// Lazy — avoids module-level PublicKey construction before polyfills are ready
+let _programId: PublicKey | null = null;
+function getProgramId(): PublicKey {
+  if (!_programId) _programId = new PublicKey(GOVERNANCE_PROGRAM_ID);
+  return _programId;
+}
 
 async function confirm(
   connection: Connection,
@@ -114,7 +119,7 @@ export async function createRealmWithDeposit(
 
   const realmPk = await withCreateRealm(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     name,
     payer,      // realmAuthority
@@ -129,7 +134,7 @@ export async function createRealmWithDeposit(
 
   await withDepositGoverningTokens(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
     ata,    // governingTokenSource (ATA holding $TICK)
@@ -168,7 +173,7 @@ export async function createGovernanceAndProposal(
   const instructions: TransactionInstruction[] = [];
 
   const tokenOwnerRecord = await getTokenOwnerRecordAddress(
-    PROGRAM_ID,
+    getProgramId(),
     realmPk,
     mintPk,
     payer,
@@ -194,7 +199,7 @@ export async function createGovernanceAndProposal(
 
   const governancePk = await withCreateGovernance(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
     undefined,  // governedAccount — not governing a specific account
@@ -206,7 +211,7 @@ export async function createGovernanceAndProposal(
 
   const proposalPk = await withCreateProposal(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
     governancePk,
@@ -224,7 +229,7 @@ export async function createGovernanceAndProposal(
 
   withSignOffProposal(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
     governancePk,
@@ -259,7 +264,7 @@ export async function lockTokens(
 
   const tokenOwnerRecord = await withDepositGoverningTokens(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
     ata,
@@ -295,7 +300,7 @@ export async function castVoteOnProposal(
   const instructions: TransactionInstruction[] = [];
 
   const tokenOwnerRecord = await getTokenOwnerRecordAddress(
-    PROGRAM_ID,
+    getProgramId(),
     realmPk,
     mintPk,
     payer,
@@ -318,7 +323,7 @@ export async function castVoteOnProposal(
 
   await withCastVote(
     instructions,
-    PROGRAM_ID,
+    getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
     governancePk,
