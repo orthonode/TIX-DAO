@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { Suspense, useState } from 'react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useSearchParams } from 'next/navigation';
+import { PublicKey } from '@solana/web3.js';
 import Navbar from '@/components/Navbar';
 import ProposalCard from '@/components/ProposalCard';
 import Footer from '@/components/Footer';
+import { castVoteOnProposal } from '@/lib/governanceActions';
 
 const MOCK_PROPOSALS = [
   {
@@ -27,15 +30,57 @@ const MOCK_PROPOSALS = [
   },
 ];
 
-export default function ProposalsPage() {
-  const { connected } = useWallet();
-  const [votes, setVotes]   = useState<Record<number, 'yes' | 'no'>>({});
+const EXPLORER = 'https://explorer.solana.com';
+
+function ProposalsPageInner() {
+  const walletState = useWallet();
+  const { connected } = walletState;
+  const { connection } = useConnection();
+  const params = useSearchParams();
+
+  const realmParam             = params.get('realm');
+  const governanceParam        = params.get('governance');
+  const proposalParam          = params.get('proposal');
+  const proposalOwnerRecord    = params.get('proposalOwnerRecord');
+  const mintParam              = params.get('mint');
+  const isOnChain = !!(realmParam && governanceParam && proposalParam && proposalOwnerRecord && mintParam);
+
+  const [votes,  setVotes]  = useState<Record<number, 'yes' | 'no'>>({});
   const [counts, setCounts] = useState<Record<number, { yes: number; no: number }>>(
     Object.fromEntries(MOCK_PROPOSALS.map(p => [p.id, { yes: p.yes, no: p.no }]))
   );
+  const [txSig,  setTxSig]  = useState('');
+  const [voteErr, setVoteErr] = useState('');
 
-  const vote = (id: number, choice: 'yes' | 'no') => {
+  const vote = async (id: number, choice: 'yes' | 'no') => {
     if (!connected || votes[id]) return;
+
+    if (isOnChain) {
+      // Real on-chain vote — only for the first proposal (id=1) which maps to the on-chain proposal
+      if (id === 1) {
+        setVoteErr('');
+        try {
+          const { txSig: sig } = await castVoteOnProposal(
+            connection,
+            walletState,
+            new PublicKey(realmParam!),
+            new PublicKey(governanceParam!),
+            new PublicKey(proposalParam!),
+            new PublicKey(proposalOwnerRecord!),
+            new PublicKey(mintParam!),
+            choice,
+          );
+          setTxSig(sig);
+          setVotes(v => ({ ...v, [id]: choice }));
+          setCounts(c => ({ ...c, [id]: { ...c[id], [choice]: c[id][choice] + 1 } }));
+        } catch (err: unknown) {
+          setVoteErr(err instanceof Error ? err.message : String(err));
+        }
+        return;
+      }
+    }
+
+    // Mock vote for proposals 2, 3 (or when no URL params)
     setVotes(v  => ({ ...v,  [id]: choice }));
     setCounts(c => ({ ...c, [id]: { ...c[id], [choice]: c[id][choice] + 1 } }));
   };
@@ -49,7 +94,41 @@ export default function ProposalsPage() {
         <div style={{ marginBottom: 32, fontSize: 12, color: '#555555', letterSpacing: '0.04em', lineHeight: 1.9 }}>
           <div>{'> LOADING proposals.json from Solana devnet ...'}</div>
           <div>{`> ${MOCK_PROPOSALS.length} proposals found  ·  ${MOCK_PROPOSALS.filter(p => p.status === 'Active').length} active`}</div>
+          {isOnChain && (
+            <div style={{ color: '#4a7a34', marginTop: 4 }}>
+              {'> on-chain realm detected · proposal #1 votes recorded on Solana devnet'}
+            </div>
+          )}
         </div>
+
+        {/* On-chain vote feedback */}
+        {txSig && (
+          <div style={{
+            border: '1px solid #2a3a2a', background: '#0d1a0d',
+            padding: '12px 16px', marginBottom: 24,
+            fontSize: 12, color: '#88cc88', letterSpacing: '0.05em', lineHeight: 1.8,
+          }}>
+            ✓ Vote recorded on-chain ·{' '}
+            <a
+              href={`${EXPLORER}/tx/${txSig}?cluster=devnet`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: '#7a9fd4', textDecoration: 'none' }}
+            >
+              View on Solana Explorer ↗
+            </a>
+          </div>
+        )}
+
+        {voteErr && (
+          <div style={{
+            border: '1px solid #4a1a1a', background: '#1a0808',
+            padding: '12px 16px', marginBottom: 24,
+            fontSize: 12, color: '#cc4444', letterSpacing: '0.05em', lineHeight: 1.6,
+          }}>
+            ✗  {voteErr}
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {MOCK_PROPOSALS.map((proposal, idx) => (
@@ -69,5 +148,13 @@ export default function ProposalsPage() {
         <Footer showVoteNote />
       </div>
     </main>
+  );
+}
+
+export default function ProposalsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProposalsPageInner />
+    </Suspense>
   );
 }

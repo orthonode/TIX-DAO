@@ -1,9 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { Suspense, useState } from 'react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useSearchParams } from 'next/navigation';
+import { PublicKey } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { lockTokens } from '@/lib/governanceActions';
+import { TICK_MINT_DECIMALS } from '@/lib/governance';
 
 const LOCK_OPTIONS = [
   { days: 30,  label: '30 DAYS',  multiplier: 1, tag: 'CASUAL'    },
@@ -12,26 +17,58 @@ const LOCK_OPTIONS = [
   { days: 365, label: '365 DAYS', multiplier: 4, tag: 'CORE'      },
 ];
 
-export default function LockPage() {
-  const { connected } = useWallet();
-  const [selected, setSelected]   = useState<number>(365);
-  const [amount,   setAmount]     = useState('');
-  const [loading,  setLoading]    = useState(false);
-  const [done,     setDone]       = useState(false);
+const EXPLORER = 'https://explorer.solana.com';
+
+interface DoneState {
+  txSig: string;
+  tokenOwnerRecord: string;
+}
+
+function LockPageInner() {
+  const walletState = useWallet();
+  const { connected } = walletState;
+  const { connection } = useConnection();
+  const params = useSearchParams();
+
+  const realmParam = params.get('realm');
+  const mintParam  = params.get('mint');
+  const hasParams  = !!(realmParam && mintParam);
+
+  const [selected, setSelected] = useState<number>(365);
+  const [amount,   setAmount]   = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [done,     setDone]     = useState<DoneState | null>(null);
+  const [error,    setError]    = useState('');
 
   const option      = LOCK_OPTIONS.find(o => o.days === selected) ?? LOCK_OPTIONS[LOCK_OPTIONS.length - 1];
   const parsed      = parseFloat(amount) || 0;
   const votingPower = parsed * option.multiplier;
 
   const handleLock = async () => {
-    if (!connected || !parsed) return;
+    if (!connected || !parsed || !hasParams) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setLoading(false);
-    setDone(true);
+    setError('');
+
+    try {
+      const realmPk = new PublicKey(realmParam!);
+      const mintPk  = new PublicKey(mintParam!);
+      const rawAmount = BigInt(Math.floor(parsed * 10 ** TICK_MINT_DECIMALS));
+      const { txSig, tokenOwnerRecord } = await lockTokens(
+        connection,
+        walletState,
+        realmPk,
+        mintPk,
+        new BN(rawAmount.toString()),
+      );
+      setDone({ txSig, tokenOwnerRecord: tokenOwnerRecord.toBase58() });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const canSubmit = connected && parsed > 0 && !loading && !done;
+  const canSubmit = connected && parsed > 0 && hasParams && !loading && !done;
 
   return (
     <main style={{ background: '#0a0a0a', minHeight: '100vh' }}>
@@ -44,9 +81,19 @@ export default function LockPage() {
           <div>{'> PROTOCOL: vote-escrowed $TICK  ·  flash-loan-proof governance'}</div>
         </div>
 
+        {/* No params warning */}
+        {!hasParams && (
+          <div style={{
+            border: '1px solid #3a2800', background: '#1c1400',
+            padding: '12px 16px', marginBottom: 28,
+            fontSize: 12, color: '#c8943a', letterSpacing: '0.05em', lineHeight: 1.6,
+          }}>
+            ⚠  No DAO params found — <a href="/create" style={{ color: '#e0b060', textDecoration: 'none' }}>create a DAO first at /create</a> to get a shareable lock URL.
+          </div>
+        )}
+
         {/* Lock option cards */}
         <div style={{ border: '1px solid #282828', background: '#111111', marginBottom: 24 }}>
-          {/* Panel header */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '8px 18px', borderBottom: '1px solid #1e1e1e', background: '#0d0d0d',
@@ -127,7 +174,6 @@ export default function LockPage() {
           </div>
 
           <div style={{ padding: '24px 28px' }}>
-            {/* Amount input */}
             <div style={{ marginBottom: 28 }}>
               <div style={{ fontSize: 11, color: '#555555', letterSpacing: '0.16em', marginBottom: 10, userSelect: 'none' }}>
                 // $TICK_AMOUNT
@@ -154,18 +200,15 @@ export default function LockPage() {
               </div>
             </div>
 
-            {/* Voting power display */}
             <div style={{ border: '1px solid #1e1e1e', background: '#0d0d0d', padding: '16px 20px' }}>
               <div style={{ fontSize: 11, color: '#444444', letterSpacing: '0.14em', marginBottom: 8 }}>
                 PROJECTED VOTING POWER
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                 <span style={{
-                  fontSize: 32,
-                  fontWeight: 'bold',
+                  fontSize: 32, fontWeight: 'bold',
                   color: votingPower > 0 ? '#e0e0e0' : '#2a2a2a',
-                  transition: 'color 0.2s',
-                  letterSpacing: '0.02em',
+                  transition: 'color 0.2s', letterSpacing: '0.02em',
                 }}>
                   {votingPower > 0 ? votingPower.toLocaleString() : '0'}
                 </span>
@@ -180,7 +223,7 @@ export default function LockPage() {
           </div>
         </div>
 
-        {/* Status / button */}
+        {/* Status / error */}
         {!connected && (
           <div style={{
             border: '1px solid #3a2800', background: '#1c1400',
@@ -191,17 +234,35 @@ export default function LockPage() {
           </div>
         )}
 
+        {error && (
+          <div style={{
+            border: '1px solid #4a1a1a', background: '#1a0808',
+            padding: '12px 16px', marginBottom: 20,
+            fontSize: 12, color: '#cc4444', letterSpacing: '0.05em', lineHeight: 1.6,
+          }}>
+            ✗  {error}
+          </div>
+        )}
+
         {done ? (
           <div style={{ border: '1px solid #2a3a2a', background: '#0d1a0d', padding: '28px 32px', textAlign: 'center' }}>
             <div style={{ fontSize: 28, marginBottom: 14 }}>✅</div>
             <div style={{ color: '#88cc88', fontSize: 16, fontWeight: 'bold', letterSpacing: '0.12em', marginBottom: 8 }}>
               TOKENS LOCKED
             </div>
-            <div style={{ color: '#667766', fontSize: 13 }}>
+            <div style={{ color: '#667766', fontSize: 13, marginBottom: 16 }}>
               {parsed.toLocaleString()} $TICK locked for {option.label.toLowerCase()} · {votingPower.toLocaleString()} ve$TICK granted
             </div>
+            <a
+              href={`${EXPLORER}/tx/${done.txSig}?cluster=devnet`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: 'block', fontSize: 12, color: '#7a9fd4', textDecoration: 'none', marginBottom: 8 }}
+            >
+              View transaction on Solana Explorer ↗
+            </a>
             <div style={{ marginTop: 12, fontSize: 11, color: '#445544', letterSpacing: '0.08em' }}>
-              LOCK RECORDED ON SOLANA DEVNET  ·  SPL-GOVERNANCE VOTER WEIGHT UPDATED
+              TOKEN OWNER RECORD  ·  {done.tokenOwnerRecord.slice(0, 20)}...
             </div>
           </div>
         ) : (
@@ -238,7 +299,7 @@ export default function LockPage() {
               el.style.boxShadow = 'none';
             }}
           >
-            {loading ? '[ locking tokens ... ]' : '[ $ ./lock-tokens --escrow devnet ]'}
+            {loading ? '[ locking tokens on devnet ... ]' : '[ $ ./lock-tokens --escrow devnet ]'}
           </button>
         )}
 
@@ -246,5 +307,13 @@ export default function LockPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function LockPage() {
+  return (
+    <Suspense fallback={null}>
+      <LockPageInner />
+    </Suspense>
   );
 }
