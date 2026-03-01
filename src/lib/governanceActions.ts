@@ -38,16 +38,22 @@ import {
 } from '@solana/spl-governance';
 
 import {
-  GOVERNANCE_PROGRAM_ID,
   GOVERNANCE_PROGRAM_VERSION,
   TICK_MINT_DECIMALS,
   TICK_INITIAL_SUPPLY,
 } from './governance';
 
-// Lazy — avoids module-level PublicKey construction before polyfills are ready
+// Pre-computed bytes of GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
+// Using bytes avoids bs58.decode which breaks after Phantom's SES lockdown
+const GOVERNANCE_PROGRAM_ID_BYTES = new Uint8Array([
+  234, 228,  53, 189, 238, 117, 183,  52,
+  205,  89,  62, 207, 154,  48,  75, 128,
+   36, 186,  40, 152, 103, 183, 105, 177,
+  249,  60, 167, 187, 184, 142,  70, 254,
+]);
 let _programId: PublicKey | null = null;
 function getProgramId(): PublicKey {
-  if (!_programId) _programId = new PublicKey(GOVERNANCE_PROGRAM_ID);
+  if (!_programId) _programId = new PublicKey(GOVERNANCE_PROGRAM_ID_BYTES);
   return _programId;
 }
 
@@ -154,18 +160,24 @@ export async function createRealmWithDeposit(
   return { realmPk, txSig: sig };
 }
 
-// ── TX3: Create governance + proposal + sign off (starts voting) ─────────────
+// Standard TIX-DAO governance proposals — created on-chain in TX3
+export const STANDARD_PROPOSALS = [
+  'Cap resale at 150% of face value',
+  'Set artist royalty at 10% on resales',
+  'Allow 72hr refund window before event',
+] as const;
+
+// ── TX3: Create governance + 3 proposals + sign off all (starts voting) ──────
 
 export async function createGovernanceAndProposal(
   connection: Connection,
   wallet: WalletContextState,
   realmPk: PublicKey,
   mintPk: PublicKey,
-  proposalTitle: string,
   quorumPct: number,
 ): Promise<{
   governancePk: PublicKey;
-  proposalPk: PublicKey;
+  proposalPks: [PublicKey, PublicKey, PublicKey];
   proposalOwnerRecord: PublicKey;
   txSig: string;
 }> {
@@ -202,42 +214,50 @@ export async function createGovernanceAndProposal(
     getProgramId(),
     GOVERNANCE_PROGRAM_VERSION,
     realmPk,
-    undefined,  // governedAccount — not governing a specific account
+    SystemProgram.programId,  // deterministic governed account — avoids random PDA each call
     config,
     tokenOwnerRecord,
     payer,
     payer,      // createAuthority
   );
 
-  const proposalPk = await withCreateProposal(
-    instructions,
-    getProgramId(),
-    GOVERNANCE_PROGRAM_VERSION,
-    realmPk,
-    governancePk,
-    tokenOwnerRecord,
-    proposalTitle,
-    '',           // descriptionLink
-    mintPk,
-    payer,        // governanceAuthority
-    0,            // proposalIndex
-    VoteType.SINGLE_CHOICE,
-    ['Approve'],
-    true,         // useDenyOption
-    payer,
-  );
+  // Create all 3 standard TIX-DAO proposals in the same transaction
+  const proposalPks: PublicKey[] = [];
+  for (let i = 0; i < STANDARD_PROPOSALS.length; i++) {
+    const pk = await withCreateProposal(
+      instructions,
+      getProgramId(),
+      GOVERNANCE_PROGRAM_VERSION,
+      realmPk,
+      governancePk,
+      tokenOwnerRecord,
+      STANDARD_PROPOSALS[i],
+      '',         // descriptionLink
+      mintPk,
+      payer,      // governanceAuthority
+      i,          // proposalIndex
+      VoteType.SINGLE_CHOICE,
+      ['Approve'],
+      true,       // useDenyOption
+      payer,
+    );
+    proposalPks.push(pk);
+  }
 
-  withSignOffProposal(
-    instructions,
-    getProgramId(),
-    GOVERNANCE_PROGRAM_VERSION,
-    realmPk,
-    governancePk,
-    proposalPk,
-    payer,        // signatory
-    undefined,    // signatoryRecord — auto-derived when undefined
-    tokenOwnerRecord, // proposalOwnerRecord
-  );
+  // Sign off all 3 proposals so voting starts immediately
+  for (const pk of proposalPks) {
+    withSignOffProposal(
+      instructions,
+      getProgramId(),
+      GOVERNANCE_PROGRAM_VERSION,
+      realmPk,
+      governancePk,
+      pk,
+      payer,          // signatory
+      undefined,      // signatoryRecord — auto-derived
+      tokenOwnerRecord,
+    );
+  }
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
   const tx = new Transaction({ recentBlockhash: blockhash, feePayer: payer }).add(...instructions);
@@ -245,7 +265,12 @@ export async function createGovernanceAndProposal(
   const sig = await wallet.sendTransaction(tx, connection);
   await confirm(connection, sig, blockhash, lastValidBlockHeight);
 
-  return { governancePk, proposalPk, proposalOwnerRecord: tokenOwnerRecord, txSig: sig };
+  return {
+    governancePk,
+    proposalPks: proposalPks as [PublicKey, PublicKey, PublicKey],
+    proposalOwnerRecord: tokenOwnerRecord,
+    txSig: sig,
+  };
 }
 
 // ── Lock page: deposit more tokens ──────────────────────────────────────────

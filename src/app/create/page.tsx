@@ -8,6 +8,7 @@ import {
   createTickMint,
   createRealmWithDeposit,
   createGovernanceAndProposal,
+  STANDARD_PROPOSALS,
 } from '@/lib/governanceActions';
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -93,7 +94,7 @@ interface SuccessState {
   mintPk: string;
   realmPk: string;
   governancePk: string;
-  proposalPk: string;
+  proposalPks: [string, string, string];
   proposalOwnerRecord: string;
   tx1: string;
   tx2: string;
@@ -139,34 +140,36 @@ export default function CreatePage() {
       addLog(`  ✓ $TICK minted — ${mintKeypair.publicKey.toBase58().slice(0, 16)}...`, '#88cc88');
 
       // ── TX2 ──────────────────────────────────────────────────────────────
+      // Append the first 6 chars of the mint address so every deploy gets a
+      // unique realm PDA, even if the user re-uses the same venue name.
+      const realmName = `${name}-${mintKeypair.publicKey.toBase58().slice(0, 6)}`;
       addLog(`> Deploying governance realm: "${name}" ...`);
       const { realmPk, txSig: tx2 } = await createRealmWithDeposit(
         connection,
         walletState,
-        name,
+        realmName,
         mintKeypair.publicKey,
       );
       addLog(`  ✓ Realm deployed — ${realmPk.toBase58().slice(0, 16)}...`, '#88cc88');
 
       // ── TX3 ──────────────────────────────────────────────────────────────
-      addLog('> Creating governance + seeding proposals...');
-      const { governancePk, proposalPk, proposalOwnerRecord, txSig: tx3 } =
+      addLog('> Creating governance + 3 proposals...');
+      const { governancePk, proposalPks, proposalOwnerRecord, txSig: tx3 } =
         await createGovernanceAndProposal(
           connection,
           walletState,
           realmPk,
           mintKeypair.publicKey,
-          `${name} Genesis Proposal`,
           Number(quorum) || 60,
         );
-      addLog(`  ✓ Governance + proposal live`, '#88cc88');
+      addLog(`  ✓ Governance + 3 proposals live`, '#88cc88');
       addLog('> Done.', '#aaaaaa');
 
       setSuccess({
         mintPk:              mintKeypair.publicKey.toBase58(),
         realmPk:             realmPk.toBase58(),
         governancePk:        governancePk.toBase58(),
-        proposalPk:          proposalPk.toBase58(),
+        proposalPks:         proposalPks.map(p => p.toBase58()) as [string, string, string],
         proposalOwnerRecord: proposalOwnerRecord.toBase58(),
         tx1, tx2, tx3,
       });
@@ -181,7 +184,7 @@ export default function CreatePage() {
   const canSubmit = connected && !!name && !loading;
 
   const proposalsUrl = success
-    ? `/proposals?realm=${success.realmPk}&governance=${success.governancePk}&proposal=${success.proposalPk}&proposalOwnerRecord=${success.proposalOwnerRecord}&mint=${success.mintPk}`
+    ? `/proposals?realm=${success.realmPk}&governance=${success.governancePk}&p1=${success.proposalPks[0]}&p2=${success.proposalPks[1]}&p3=${success.proposalPks[2]}&proposalOwnerRecord=${success.proposalOwnerRecord}&mint=${success.mintPk}`
     : '';
 
   const lockUrl = success
@@ -254,17 +257,20 @@ export default function CreatePage() {
                 ))}
               </div>
 
-              {/* Realm account */}
+              {/* Accounts */}
               <div style={{ border: '1px solid #1e1e1e', background: '#0a0a0a', padding: '16px 20px', marginBottom: 20 }}>
                 <div style={{ fontSize: 11, color: '#444444', letterSpacing: '0.14em', marginBottom: 12 }}>
                   ACCOUNTS
                 </div>
-                {[
+                {([
                   { label: 'Realm', pk: success.realmPk },
                   { label: 'Governance', pk: success.governancePk },
-                  { label: 'Proposal', pk: success.proposalPk },
                   { label: '$TICK Mint', pk: success.mintPk },
-                ].map(({ label, pk }) => (
+                  ...success.proposalPks.map((pk, i) => ({
+                    label: `Proposal #${i + 1}`,
+                    pk,
+                  })),
+                ] as { label: string; pk: string }[]).map(({ label, pk }) => (
                   <div key={pk} style={{ marginBottom: 8, fontSize: 12 }}>
                     <span style={{ color: '#555555' }}>{label}  </span>
                     <a

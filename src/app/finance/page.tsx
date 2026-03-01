@@ -9,7 +9,6 @@ export default function FinancePage() {
   const { connected } = useWallet();
   const [revenue,    setRevenue]    = useState('');
   const [advancePct, setAdvancePct] = useState('70');
-  const [loading,    setLoading]    = useState(false);
   const [termSheet,  setTermSheet]  = useState(false);
 
   const rev      = parseFloat(revenue.replace(/,/g, '')) || 0;
@@ -20,13 +19,10 @@ export default function FinancePage() {
   const yield_   = ((fee / loan) * 100).toFixed(1);  // lender yield
 
   const hasCalc  = rev > 0 && pct > 0;
-  const canSubmit = connected && hasCalc && !loading && !termSheet;
+  const canSubmit = connected && hasCalc && !termSheet;
 
-  const handleRequest = async () => {
+  const handleRequest = () => {
     if (!canSubmit) return;
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 1800));
-    setLoading(false);
     setTermSheet(true);
   };
 
@@ -194,7 +190,7 @@ export default function FinancePage() {
             el.style.boxShadow = 'none';
           }}
         >
-          {loading ? '[ generating term sheet ... ]' : '[ $ ./request-advance --collateral ticks ]'}
+          {'[ $ ./request-advance --collateral ticks ]'}
         </button>
 
         {/* Term sheet */}
@@ -226,7 +222,7 @@ export default function FinancePage() {
             </div>
 
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #1e2e1e', fontSize: 11, color: '#3a5a3a', letterSpacing: '0.08em' }}>
-              TERM SHEET IS NON-BINDING IN MVP  ·  REAL DISBURSEMENT SHIPS PHASE 3
+              CALCULATOR ONLY  ·  TICKS PROTOCOL DISBURSEMENT SHIPS PHASE 3  ·  SOLANA DEVNET
             </div>
           </div>
         )}
