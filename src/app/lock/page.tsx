@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useSearchParams } from 'next/navigation';
 import { PublicKey } from '@solana/web3.js';
-import { BN } from '@coral-xyz/anchor';
+import BN from 'bn.js';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { lockTokens } from '@/lib/governanceActions';

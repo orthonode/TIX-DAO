@@ -8,7 +8,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { BN } from '@coral-xyz/anchor';
+import BN from 'bn.js';
 import type { WalletContextState } from '@solana/wallet-adapter-react';
 import {
   MINT_SIZE,
