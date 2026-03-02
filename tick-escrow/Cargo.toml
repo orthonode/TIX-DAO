@@ -1,0 +1,19 @@
+[workspace]
+members = ["programs/*"]
+resolver = "2"
+
+
+[patch.crates-io]
+# blake3 1.8.3 depends on constant_time_eq 0.4.2 (edition2024) which the SBF toolchain cargo 1.84 doesn't support
+# blake3 1.8.2 uses constant_time_eq 0.3.1 (edition2021) — compatible with SBF cargo 1.84
+blake3 = { path = "/home/arhant/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/blake3-1.8.2" }
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1

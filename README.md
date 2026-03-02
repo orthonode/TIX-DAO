@@ -11,6 +11,7 @@
 [![Built With](https://img.shields.io/badge/Built%20With-Realms-4F46E5.svg)](https://realms.today)
 [![Hackathon](https://img.shields.io/badge/Graveyard%20Hack-2026-22C55E.svg)](./docs/HACKATHON.md)
 [![Status](https://img.shields.io/badge/Status-Live-22C55E.svg)](https://tix-dao.vercel.app)
+[![Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)](./docs/CHANGELOG.md)
 [![By](https://img.shields.io/badge/By-Orthonode%20Labs-orange.svg)](https://orthonode.xyz)
 
 </div>
@@ -280,7 +281,7 @@ tix-dao/
 │
 ├── docs/
 │   ├── ARCHITECTURE.md             Full technical architecture
-│   ├── AUDIT.md                    Security audit report (2026-02-27, zero findings)
+│   ├── SECURITY_REVIEW.md          Security audit report (2026-02-27, zero findings)
 │   ├── CHANGELOG.md                Detailed changelog
 │   ├── DEPLOYMENT.md               Local dev, Vercel, custom RPC, troubleshooting
 │   ├── ROADMAP.md                  4-phase roadmap with honest risks

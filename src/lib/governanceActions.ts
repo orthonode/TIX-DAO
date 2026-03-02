@@ -17,6 +17,7 @@ import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   createMintToInstruction,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import {
   withCreateRealm,
@@ -37,24 +38,28 @@ import {
   VoteChoice,
 } from '@solana/spl-governance';
 
+import { Program, AnchorProvider, Idl } from '@coral-xyz/anchor';
+import tickEscrowIdl from './tick_escrow_idl.json';
 import {
   GOVERNANCE_PROGRAM_VERSION,
   TICK_MINT_DECIMALS,
   TICK_INITIAL_SUPPLY,
+  GOVERNANCE_PROGRAM_ID_BYTES,
+  TICK_ESCROW_PROGRAM_ID_BYTES,
 } from './governance';
 
-// Pre-computed bytes of GovER5Lthms3bLBqWub97yVrMmEogzX7xNjdXpPPCVZw
-// Using bytes avoids bs58.decode which breaks after Phantom's SES lockdown
-const GOVERNANCE_PROGRAM_ID_BYTES = new Uint8Array([
-  234, 228,  53, 189, 238, 117, 183,  52,
-  205,  89,  62, 207, 154,  48,  75, 128,
-   36, 186,  40, 152, 103, 183, 105, 177,
-  249,  60, 167, 187, 184, 142,  70, 254,
-]);
+// Program ID PublicKeys — constructed from module-level bytes (safe after SES lockdown)
+// The bytes themselves are computed at module load time in governance.ts before SES runs
 let _programId: PublicKey | null = null;
 function getProgramId(): PublicKey {
   if (!_programId) _programId = new PublicKey(GOVERNANCE_PROGRAM_ID_BYTES);
   return _programId;
+}
+
+let _escrowProgramId: PublicKey | null = null;
+function getEscrowProgramId(): PublicKey {
+  if (!_escrowProgramId) _escrowProgramId = new PublicKey(TICK_ESCROW_PROGRAM_ID_BYTES);
+  return _escrowProgramId;
 }
 
 async function confirm(
@@ -368,4 +373,131 @@ export async function castVoteOnProposal(
   await confirm(connection, sig, blockhash, lastValidBlockHeight);
 
   return { txSig: sig };
+}
+
+// ── ve$TICK Escrow: lock tokens ──────────────────────────────────────────────
+
+export async function lockTokensEscrow(
+  connection: Connection,
+  wallet: WalletContextState,
+  mintPk: PublicKey,
+  amount: BN,
+  lockDurationDays: 30 | 90 | 180 | 365,
+): Promise<{ txSig: string }> {
+  const payer     = wallet.publicKey!;
+  const programId = getEscrowProgramId();
+
+  const [escrowPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('tick_escrow'), payer.toBytes(), mintPk.toBytes()],
+    programId,
+  );
+
+  const ownerAta  = getAssociatedTokenAddressSync(mintPk, payer);
+  const escrowAta = getAssociatedTokenAddressSync(mintPk, escrowPda, true);
+
+  const anchorWallet = {
+    publicKey:           payer,
+    signTransaction:     wallet.signTransaction!,
+    signAllTransactions: wallet.signAllTransactions!,
+  };
+  const provider = new AnchorProvider(connection, anchorWallet, { commitment: 'confirmed' });
+  const program  = new Program(tickEscrowIdl as unknown as Idl, provider);
+
+  const txSig = await (program.methods as any)
+    .lockTokens(amount, lockDurationDays)
+    .accounts({
+      owner:                  payer,
+      escrowAccount:          escrowPda,
+      tickMint:               mintPk,
+      ownerTickAta:           ownerAta,
+      escrowTickAta:          escrowAta,
+      tokenProgram:           TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram:          SystemProgram.programId,
+    })
+    .rpc();
+
+  return { txSig };
+}
+
+// ── ve$TICK Escrow: unlock tokens ────────────────────────────────────────────
+
+export async function unlockTokensEscrow(
+  connection: Connection,
+  wallet: WalletContextState,
+  mintPk: PublicKey,
+): Promise<{ txSig: string }> {
+  const payer     = wallet.publicKey!;
+  const programId = getEscrowProgramId();
+
+  const [escrowPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('tick_escrow'), payer.toBytes(), mintPk.toBytes()],
+    programId,
+  );
+
+  const ownerAta  = getAssociatedTokenAddressSync(mintPk, payer);
+  const escrowAta = getAssociatedTokenAddressSync(mintPk, escrowPda, true);
+
+  const anchorWallet = {
+    publicKey:           payer,
+    signTransaction:     wallet.signTransaction!,
+    signAllTransactions: wallet.signAllTransactions!,
+  };
+  const provider = new AnchorProvider(connection, anchorWallet, { commitment: 'confirmed' });
+  const program  = new Program(tickEscrowIdl as unknown as Idl, provider);
+
+  const txSig = await (program.methods as any)
+    .unlockTokens()
+    .accounts({
+      owner:                  payer,
+      escrowAccount:          escrowPda,
+      tickMint:               mintPk,
+      ownerTickAta:           ownerAta,
+      escrowTickAta:          escrowAta,
+      tokenProgram:           TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram:          SystemProgram.programId,
+    })
+    .rpc();
+
+  return { txSig };
+}
+
+// ── ve$TICK Escrow: read state (direct buffer parsing, no Anchor Program.account) ─
+
+export async function getEscrowState(
+  connection: Connection,
+  owner: PublicKey,
+  mintPk: PublicKey,
+): Promise<{
+  exists: boolean;
+  lockedAmount?: number;
+  lockEndTs?: number;
+  multiplierBps?: number;
+  isExpired?: boolean;
+}> {
+  const programId = getEscrowProgramId();
+  const [escrowPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('tick_escrow'), owner.toBytes(), mintPk.toBytes()],
+    programId,
+  );
+
+  const info = await connection.getAccountInfo(escrowPda);
+  if (!info) return { exists: false };
+
+  // Layout: 8 (discriminator) + 32 (owner) + 32 (tick_mint) + 8 (locked_amount u64 LE)
+  //       + 8 (lock_end_ts i64 LE) + 2 (multiplier_bps u16 LE) + 1 (bump u8)
+  const d             = Buffer.from(info.data);
+  const lockedAmount  = Number(d.readBigUInt64LE(8 + 32 + 32));
+  const lockEndTs     = Number(d.readBigInt64LE(8 + 32 + 32 + 8));
+  const multiplierBps = d.readUInt16LE(8 + 32 + 32 + 8 + 8);
+  const nowTs         = Math.floor(Date.now() / 1000);
+
+  return {
+    exists:       true,
+    lockedAmount: lockedAmount / 10 ** TICK_MINT_DECIMALS,
+    lockEndTs,
+    multiplierBps,
+    isExpired:    nowTs >= lockEndTs,
+  };
 }

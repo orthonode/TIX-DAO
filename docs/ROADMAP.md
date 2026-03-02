@@ -52,29 +52,36 @@ Everything in this phase is built and running at the demo URL.
 
 ---
 
-## Phase 2 — Production Realms Integration
+## Phase 2 — Production Realms Integration ✅ Complete
 
-**Timeline:** Month 1–2 post-hackathon
+**Timeline:** 2026-03-02 (completed)
 
 Phase 1 shipped real on-chain DAO creation (TX1/TX2/TX3), real castVote for all 3 proposals, and real token locking — all confirmed on devnet. Phase 2 adds live account deserialization, the ve$TICK escrow contract, and ecosystem integration.
 
 ### Goals
 
-**Live proposal deserialization** *(next priority)*
-Replace URL-param-based proposal loading in `proposals/page.tsx` with real `getGovernanceAccounts` calls against the devnet. Subscribe to account changes via WebSocket for real-time vote count updates. Display actual on-chain vote tallies rather than baseline+delta counts.
+**Live proposal deserialization** ✅
+- [x] `getProposal` fetches real on-chain vote tallies from devnet on page load
+- [x] WebSocket `onAccountChange` subscription pushes real-time updates as votes come in
+- [x] `displayCounts` derived from live on-chain data; falls back to baseline if RPC error
+- [x] Boot context shows "fetching live vote counts" → "live on-chain vote tallies loaded"
 
-**$TICK airdrop faucet**
-Add a faucet page so demo participants can receive $TICK and participate in governance without deploying their own DAO. Already created on deploy; airdrop endpoint needed.
+**$TICK airdrop faucet** ✅
+- [x] `/faucet` page added — 2 SOL airdrop via `connection.requestAirdrop`
+- [x] Rate-limit detection and error messaging + fallback link to faucet.solana.com
+- [x] Linked in Navbar
 
-**Real ve$TICK escrow contract**
-Build the locking escrow using Anchor:
-- Users deposit $TICK and choose a lock duration (30 / 90 / 180 / 365 days)
-- Escrow mints a non-transferable `ve$TICK` receipt token
-- SPL-Governance Voter Weight plugin reads `ve$TICK` balance for vote weight
-- Lock expiry → receipt burns, underlying $TICK withdrawable
+**Real ve$TICK escrow contract** ✅
+- [x] `tick-escrow` Anchor program written and deployed to Solana devnet
+- [x] `lock_tokens` instruction: deposits $TICK, creates `EscrowAccount` PDA with `locked_amount`, `lock_end_ts`, `multiplier_bps`
+- [x] `unlock_tokens` instruction: validates lock expiry, returns $TICK to owner, closes escrow ATA
+- [x] Frontend: `lockTokensEscrow`, `unlockTokensEscrow`, `getEscrowState` in `governanceActions.ts`
+- [x] Lock page shows existing escrow state; unlock button appears when lock expires
 
-**Integration with app.realms.today**
-Submit the TIX-DAO Realm to the Realms directory. Users will be able to access the Realm via both the TIX-DAO UI and the standard Realms UI — they share the same on-chain state.
+**Integration with app.realms.today** ✅
+- [x] "Open in Realms ↗" link shown in proposals boot context when realm is connected
+- [x] `realmAddress` prop on Footer — "View on Realms ↗" link shown on proposals page
+- [x] Links point to `https://app.realms.today/dao/{realmAddress}?cluster=devnet`
 
 ---
 

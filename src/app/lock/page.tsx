@@ -1,13 +1,13 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useSearchParams } from 'next/navigation';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { lockTokens } from '@/lib/governanceActions';
+import { lockTokensEscrow, unlockTokensEscrow, getEscrowState } from '@/lib/governanceActions';
 import { TICK_MINT_DECIMALS } from '@/lib/governance';
 
 const LOCK_OPTIONS = [
@@ -24,25 +24,45 @@ interface DoneState {
   tokenOwnerRecord: string;
 }
 
+interface EscrowInfo {
+  lockedAmount: number;
+  lockEndTs: number;
+  multiplierBps: number;
+  isExpired: boolean;
+}
+
 function LockPageInner() {
   const walletState = useWallet();
   const { connected } = walletState;
   const { connection } = useConnection();
   const params = useSearchParams();
 
-  const realmParam = params.get('realm');
   const mintParam  = params.get('mint');
-  const hasParams  = !!(realmParam && mintParam);
+  const hasParams  = !!mintParam;
 
-  const [selected, setSelected] = useState<number>(365);
-  const [amount,   setAmount]   = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [done,     setDone]     = useState<DoneState | null>(null);
-  const [error,    setError]    = useState('');
+  const [selected,       setSelected]       = useState<number>(365);
+  const [amount,         setAmount]         = useState('');
+  const [loading,        setLoading]        = useState(false);
+  const [done,           setDone]           = useState<DoneState | null>(null);
+  const [error,          setError]          = useState('');
+  const [existingEscrow, setExistingEscrow] = useState<EscrowInfo | null>(null);
+  const [escrowLoading,  setEscrowLoading]  = useState(false);
+  const [unlockLoading,  setUnlockLoading]  = useState(false);
+  const [unlockDone,     setUnlockDone]     = useState<{ txSig: string } | null>(null);
 
   const option      = LOCK_OPTIONS.find(o => o.days === selected) ?? LOCK_OPTIONS[LOCK_OPTIONS.length - 1];
   const parsed      = parseFloat(amount) || 0;
   const votingPower = parsed * option.multiplier;
+
+  // Check for existing escrow on connect
+  useEffect(() => {
+    if (!connected || !walletState.publicKey || !mintParam) return;
+    setEscrowLoading(true);
+    getEscrowState(connection, walletState.publicKey, new PublicKey(mintParam))
+      .then(s => { if (s.exists) setExistingEscrow(s as EscrowInfo); })
+      .catch(() => {})
+      .finally(() => setEscrowLoading(false));
+  }, [connected, walletState.publicKey, mintParam, connection]);
 
   const handleLock = async () => {
     if (!connected || !parsed || !hasParams) return;
@@ -50,21 +70,34 @@ function LockPageInner() {
     setError('');
 
     try {
-      const realmPk = new PublicKey(realmParam!);
-      const mintPk  = new PublicKey(mintParam!);
+      const mintPk   = new PublicKey(mintParam!);
       const rawAmount = BigInt(Math.floor(parsed * 10 ** TICK_MINT_DECIMALS));
-      const { txSig, tokenOwnerRecord } = await lockTokens(
+      const { txSig } = await lockTokensEscrow(
         connection,
         walletState,
-        realmPk,
         mintPk,
         new BN(rawAmount.toString()),
+        selected as 30 | 90 | 180 | 365,
       );
-      setDone({ txSig, tokenOwnerRecord: tokenOwnerRecord.toBase58() });
+      setDone({ txSig, tokenOwnerRecord: '' });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUnlock = async () => {
+    if (!connected || !mintParam || !existingEscrow?.isExpired) return;
+    setUnlockLoading(true);
+    try {
+      const { txSig } = await unlockTokensEscrow(connection, walletState, new PublicKey(mintParam));
+      setUnlockDone({ txSig });
+      setExistingEscrow(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUnlockLoading(false);
     }
   };
 
@@ -89,6 +122,40 @@ function LockPageInner() {
             fontSize: 12, color: '#c8943a', letterSpacing: '0.05em', lineHeight: 1.6,
           }}>
             ⚠  No DAO params found — <a href="/create" style={{ color: '#e0b060', textDecoration: 'none' }}>create a DAO first at /create</a> to get a shareable lock URL.
+          </div>
+        )}
+
+        {/* Existing escrow panel */}
+        {escrowLoading && (
+          <div style={{ fontSize: 12, color: '#555555', marginBottom: 16 }}>{'> checking existing escrow ...'}</div>
+        )}
+
+        {existingEscrow && (
+          <div style={{ border: '1px solid #283828', background: '#0d150d', padding: '20px 24px', marginBottom: 24 }}>
+            <div style={{ fontSize: 10, color: '#4a6a34', letterSpacing: '0.18em', marginBottom: 14 }}>ACTIVE_ESCROW</div>
+            <div style={{ fontSize: 12, color: '#88aa88', lineHeight: 2 }}>
+              <div>locked  →  {existingEscrow.lockedAmount.toLocaleString()} $TICK</div>
+              <div>multiplier  →  {existingEscrow.multiplierBps / 100}×</div>
+              <div>unlocks  →  {new Date(existingEscrow.lockEndTs * 1000).toLocaleDateString()}</div>
+              <div>status  →  {existingEscrow.isExpired ? '✓ EXPIRED — ready to unlock' : '🔒 locked'}</div>
+            </div>
+            {existingEscrow.isExpired && (
+              <button onClick={handleUnlock} disabled={unlockLoading} style={{
+                marginTop: 16, width: '100%', background: 'transparent',
+                border: '1px solid #446644', color: '#88cc88',
+                padding: '12px 24px', fontSize: 12, letterSpacing: '0.14em',
+                cursor: 'pointer', fontFamily: "ui-monospace, 'Courier New', monospace",
+              }}>
+                {unlockLoading ? '[ unlocking ... ]' : '[ $ ./unlock-tokens --escrow devnet ]'}
+              </button>
+            )}
+            {unlockDone && (
+              <div style={{ marginTop: 12, fontSize: 12, color: '#88cc88' }}>
+                ✓ Tokens unlocked ·{' '}
+                <a href={`${EXPLORER}/tx/${unlockDone.txSig}?cluster=devnet`} target="_blank" rel="noreferrer"
+                   style={{ color: '#7a9fd4', textDecoration: 'none' }}>View on Explorer ↗</a>
+              </div>
+            )}
           </div>
         )}
 
@@ -261,9 +328,11 @@ function LockPageInner() {
             >
               View transaction on Solana Explorer ↗
             </a>
-            <div style={{ marginTop: 12, fontSize: 11, color: '#445544', letterSpacing: '0.08em' }}>
-              TOKEN OWNER RECORD  ·  {done.tokenOwnerRecord.slice(0, 20)}...
-            </div>
+            {done.tokenOwnerRecord && (
+              <div style={{ marginTop: 12, fontSize: 11, color: '#445544', letterSpacing: '0.08em' }}>
+                TOKEN OWNER RECORD  ·  {done.tokenOwnerRecord.slice(0, 20)}...
+              </div>
+            )}
           </div>
         ) : (
           <button

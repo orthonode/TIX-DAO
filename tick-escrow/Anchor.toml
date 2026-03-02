@@ -1,0 +1,13 @@
+[features]
+seeds = true
+skip-lint = false
+
+[programs.devnet]
+tick_escrow = "4zoxHUogrvHXZDfikE17JGbf9zfmNfR4E8YCD8Ltt9st"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

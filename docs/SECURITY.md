@@ -132,7 +132,7 @@ We believe in honest security disclosure. The following limitations exist in the
 | RWA finance calculator | ⚠️ Phase 3 | UI-only calculator; TICKS protocol disbursement ships Phase 3 |
 | ve$TICK escrow | ⚠️ Phase 2 | Lock duration UI is live; custom escrow contract with time-weighted multipliers ships Phase 2 |
 | Live proposal deserialization | ⚠️ Phase 2 | Proposals loaded from URL params; full `getGovernanceAccounts` subscription ships Phase 2 |
-| No audit of `governanceActions.ts` | Phase 2 scope | Added post-initial-audit; see informational note 5.1 in AUDIT.md |
+| No audit of `governanceActions.ts` | Phase 2 scope | Added post-initial-audit; see informational note 5.1 in SECURITY_REVIEW.md |
 | Public devnet RPC | Rate-limited | Not suitable for high-traffic production |
 | Council multi-sig | ⚠️ Phase 2 | Emergency veto mechanism exists in design only |
 

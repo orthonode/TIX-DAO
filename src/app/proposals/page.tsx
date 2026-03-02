@@ -1,9 +1,10 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useSearchParams } from 'next/navigation';
 import { PublicKey } from '@solana/web3.js';
+import { getProposal } from '@solana/spl-governance';
 import Navbar from '@/components/Navbar';
 import ProposalCard from '@/components/ProposalCard';
 import Footer from '@/components/Footer';
@@ -65,11 +66,54 @@ function ProposalsPageInner() {
   const isOnChain = !!(realmParam && governanceParam && proposalOwnerRecord && mintParam && p1 && p2 && p3);
 
   // votes[i] = 'yes' | 'no' once cast
-  const [votes,   setVotes]   = useState<Record<number, 'yes' | 'no'>>({});
-  const [counts,  setCounts]  = useState(BASELINE.map(b => ({ ...b })));
-  const [txSigs,  setTxSigs]  = useState<Record<number, string>>({});
-  const [loading, setLoading] = useState<Record<number, boolean>>({});
-  const [errors,  setErrors]  = useState<Record<number, string>>({});
+  const [votes,        setVotes]        = useState<Record<number, 'yes' | 'no'>>({});
+  const [counts,       setCounts]       = useState(BASELINE.map(b => ({ ...b })));
+  const [txSigs,       setTxSigs]       = useState<Record<number, string>>({});
+  const [loading,      setLoading]      = useState<Record<number, boolean>>({});
+  const [errors,       setErrors]       = useState<Record<number, string>>({});
+  const [realCounts,   setRealCounts]   = useState<Array<{ yes: number; no: number } | null>>([null, null, null]);
+  const [countsLoading, setCountsLoading] = useState(false);
+
+  // Fetch live on-chain vote counts once on mount
+  useEffect(() => {
+    if (!isOnChain) return;
+    const pks = [p1!, p2!, p3!].map(s => new PublicKey(s));
+    setCountsLoading(true);
+    Promise.all(pks.map(pk => getProposal(connection, pk)))
+      .then(results => setRealCounts(results.map(r => r
+        ? {
+            yes: r.account.options[0]?.voteWeight.toNumber() ?? 0,
+            no:  r.account.denyVoteWeight?.toNumber() ?? 0,
+          }
+        : null,
+      )))
+      .catch(() => {}) // fallback to BASELINE on any error
+      .finally(() => setCountsLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnChain, connection]); // p1/p2/p3 are stable URL params
+
+  // WebSocket subscription for real-time vote count updates
+  useEffect(() => {
+    if (!isOnChain) return;
+    const pks = [p1!, p2!, p3!].map(s => new PublicKey(s));
+
+    const ids = pks.map((pk, idx) =>
+      connection.onAccountChange(pk, () => {
+        getProposal(connection, pk).then(r => {
+          if (!r) return;
+          const yes = r.account.options[0]?.voteWeight.toNumber() ?? 0;
+          const no  = r.account.denyVoteWeight?.toNumber() ?? 0;
+          setRealCounts(prev => prev.map((c, i) => i === idx ? { yes, no } : c));
+        }).catch(() => {});
+      })
+    );
+
+    return () => { ids.forEach(id => connection.removeAccountChangeListener(id)); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnChain, connection]);
+
+  // Use live on-chain counts when available, fall back to BASELINE
+  const displayCounts = counts.map((baseline, idx) => realCounts[idx] ?? baseline);
 
   const vote = async (id: number, choice: 'yes' | 'no') => {
     if (!connected || votes[id] || loading[id]) return;
@@ -113,6 +157,19 @@ function ProposalsPageInner() {
               <div>{`> ${STANDARD_PROPOSALS.length} proposals found  ·  ${STANDARD_PROPOSALS.length} active`}</div>
               <div style={{ color: '#4a7a34', marginTop: 4 }}>
                 {'> on-chain realm detected · votes create VoteRecordV2 PDAs on devnet'}
+              </div>
+              {countsLoading && (
+                <div style={{ color: '#555555', marginTop: 2 }}>{'> fetching live vote counts from devnet ...'}</div>
+              )}
+              {!countsLoading && realCounts.some(r => r !== null) && (
+                <div style={{ color: '#4a5a34', marginTop: 2 }}>{'> live on-chain vote tallies loaded'}</div>
+              )}
+              <div style={{ marginTop: 4 }}>
+                <a href={`https://app.realms.today/dao/${realmParam}?cluster=devnet`}
+                   target="_blank" rel="noreferrer"
+                   style={{ fontSize: 12, color: '#5a7aaa', textDecoration: 'none', letterSpacing: '0.06em' }}>
+                  {'> Open in Realms ↗'}
+                </a>
               </div>
             </>
           ) : (
@@ -171,8 +228,8 @@ function ProposalsPageInner() {
                       'Ensure artists earn on every ticket resale, not just primary sales.',
                       'Fans can return tickets up to 72 hours before showtime.',
                     ][idx]}
-                    yes={counts[idx].yes}
-                    no={counts[idx].no}
+                    yes={displayCounts[idx].yes}
+                    no={displayCounts[idx].no}
                     status="Active"
                     ends="2026-04-01"
                     index={idx}
@@ -186,7 +243,7 @@ function ProposalsPageInner() {
           </>
         )}
 
-        <Footer showVoteNote />
+        <Footer showVoteNote realmAddress={realmParam ?? undefined} />
       </div>
     </main>
   );

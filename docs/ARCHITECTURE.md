@@ -278,13 +278,14 @@ Next.js 16 defaults to Turbopack. TIX-DAO uses `--webpack` explicitly because `@
 | $TICK token mint (TX1) | ✅ Real | Fresh SPL mint per deploy; confirmed on devnet |
 | DAO creation — createRealm (TX2) | ✅ Real | Real SPL-Governance CPI; TokenOwnerRecord PDA created |
 | DAO creation — createGovernance + createProposal (TX3) | ✅ Real | All three instructions in one confirmed devnet tx |
-| Proposal loading | ✅ URL params | 3 proposal PDAs passed via URL from Create DAO; displayed with baseline + real accumulated vote counts; full `getGovernanceAccounts` subscription ships Phase 2 |
+| Proposal loading | ✅ Live on-chain | `getProposal` fetches real vote tallies; WebSocket subscription updates counts in real-time; Realms ecosystem link shown |
 | Casting votes | ✅ Real on-chain | `castVoteOnProposal` wired for all 3 proposals; each vote creates `VoteRecordV2` PDA on devnet |
-| Token locking | ✅ Real on-chain | `lockTokens` calls `depositGoverningTokens`; confirmed on devnet |
-| ve$TICK time-weighting | ⚠️ Phase 2 | Lock duration UI is live; custom escrow with multiplier enforcement ships Phase 2 |
+| Token locking | ✅ Real on-chain | `lockTokensEscrow` calls Anchor tick-escrow program on devnet; PDA escrow with time-lock + multiplier |
+| ve$TICK time-weighting | ✅ Real on-chain | `tick-escrow` Anchor program deployed to devnet; `EscrowAccount` PDA stores locked_amount, lock_end_ts, multiplier_bps |
+| SOL devnet faucet | ✅ Phase 2 | `/faucet` page: 2 SOL airdrop via `connection.requestAirdrop`; rate-limit handling + fallback link |
 | RWA advance | ⚠️ Phase 3 | Calculator live; TICKS protocol disbursement ships Phase 3 |
 | Real treasury | ⚠️ Phase 2 | NativeTreasury PDA auto-created by Realms; explicit management UI ships Phase 2 |
-| Council multi-sig | ⚠️ Phase 2 | Planned for Phase 2 |
+| Council multi-sig | ⚠️ Phase 3 | Planned for Phase 3 |
 
 `@solana/spl-governance ^0.3.28` and `@coral-xyz/anchor ^0.32.1` are already installed and active.
 

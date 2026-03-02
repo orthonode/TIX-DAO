@@ -14,12 +14,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Live proposal deserialization via `getGovernanceAccounts` + WebSocket subscription (Phase 2)
-- ve$TICK escrow contract — Anchor program with time-weighted lock/unlock (Phase 2)
-- $TICK airdrop faucet — so demo participants can vote without deploying their own DAO (Phase 2)
-- Council multi-sig deployment (Phase 2)
+- Council multi-sig deployment (Phase 3)
 - TICKS protocol RWA integration — real advance disbursement (Phase 3)
 - Mainnet launch (Phase 4)
+
+---
+
+## [2.0.0] — 2026-03-02 — Phase 2: Live Deserialization, Escrow Program, Faucet
+
+### Added
+- **ve$TICK Anchor escrow program** — `tick-escrow/` workspace: `lock_tokens` + `unlock_tokens` instructions, `EscrowAccount` PDA with `locked_amount`, `lock_end_ts`, `multiplier_bps`, `bump`; deployed to Solana devnet
+- **Live proposal deserialization** — `proposals/page.tsx` now fetches real vote tallies via `getProposal` on mount; WebSocket `onAccountChange` subscription provides real-time count updates; falls back to BASELINE on RPC error
+- **`/faucet` page** — 2 SOL devnet airdrop via `connection.requestAirdrop`; rate-limit detection with fallback link to faucet.solana.com; linked in Navbar
+- **Realms ecosystem links** — "Open in Realms ↗" in proposals boot context; "View on Realms ↗" in Footer via new `realmAddress` prop; both link to `app.realms.today/dao/{realm}?cluster=devnet`
+- **Escrow state panel on `/lock`** — on wallet connect, checks existing `EscrowAccount` PDA; shows locked amount, multiplier, unlock date, status; unlock button appears when lock expires
+- **`lockTokensEscrow` + `unlockTokensEscrow` + `getEscrowState`** — three new functions in `governanceActions.ts` replacing SPL-Governance deposit with real Anchor escrow CPI
+- **`src/lib/tick_escrow_idl.json`** — Anchor IDL for the tick-escrow program
+- **`TICK_ESCROW_PROGRAM_ID` + `TICK_ESCROW_PROGRAM_ID_BYTES`** in `governance.ts`
+- **`NEXT_PUBLIC_TICK_ESCROW_PROGRAM_ID`** env var added to `.env.local`
+
+### Changed
+- `lock/page.tsx` — uses `lockTokensEscrow` (Anchor CPI) instead of `lockTokens` (SPL-Governance deposit); escrow panel added above lock option cards; `hasParams` no longer requires `realm` param (only `mint` needed for escrow)
+- `proposals/page.tsx` — `displayCounts` derived from live on-chain data; `useEffect` x2 (fetch + WebSocket); Realms link in boot context; Footer receives `realmAddress` prop
+- `Footer.tsx` — added `realmAddress?: string` prop; renders Realms link above existing footer text when provided
+- `Navbar.tsx` — added `/faucet` between `/lock` and `/finance`
+- `package.json` — version `1.2.0` → `2.0.0`
 
 ---
 
@@ -119,7 +138,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `PRIVACY.md` — no data collected, wallet key handling, Vercel hosting disclosure
 - `HACKATHON.md` — judges brief, prize track alignment, submission checklist
 - `CHANGELOG.md` — this file
-- `AUDIT.md` — security audit report (zero findings, 2026-02-27)
+- `SECURITY_REVIEW.md` — security audit report (zero findings, 2026-02-27)
 
 ### Deployed
 - Vercel: https://tix-dao.vercel.app

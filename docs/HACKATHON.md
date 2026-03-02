@@ -230,7 +230,7 @@ Confirming all hackathon requirements are met:
 - [x] TERMS.md — terms of use and disclaimer (updated 2026-03-01)
 - [x] PRIVACY.md — privacy policy (updated 2026-03-01)
 - [x] HACKATHON.md — this document (updated 2026-03-01)
-- [x] AUDIT.md — security audit report (updated 2026-03-01)
+- [x] SECURITY_REVIEW.md — security audit report (updated 2026-03-01)
 - [x] CHANGELOG.md — v1.1.0 covering real on-chain transactions (2026-03-01)
 - [x] README.md — polished, badge-decorated, judge-ready
 - [x] LICENSE — MIT 2026
