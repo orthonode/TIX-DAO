@@ -198,6 +198,33 @@ function ProposalsPageInner() {
           )}
         </div>
 
+        {/* Realm verification banner — shown whenever a real DAO is connected */}
+        {isOnChain && (
+          <div style={{
+            border: '1px solid #3a2800', background: '#131000',
+            padding: '14px 18px', marginBottom: 20,
+            fontSize: 11, letterSpacing: '0.06em', lineHeight: 1.9,
+          }}>
+            <div style={{ color: '#c8943a', marginBottom: 6, letterSpacing: '0.14em' }}>
+              ⚠  VERIFY REALM IDENTITY BEFORE VOTING
+            </div>
+            <div style={{ color: '#7a6030', marginBottom: 8 }}>
+              Anyone can deploy a DAO with the same venue name. The realm address below
+              is the only on-chain proof of which DAO is legitimate. Cross-check it
+              against what the venue published on their official website or socials.
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ color: '#555555' }}>REALM</span>
+              <span style={{
+                fontFamily: "ui-monospace, 'Courier New', monospace",
+                color: '#e0b060', fontSize: 11, wordBreak: 'break-all',
+              }}>
+                {realmParam}
+              </span>
+            </div>
+          </div>
+        )}
+
         {!isOnChain ? (
           <NoDAO />
         ) : (

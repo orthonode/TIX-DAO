@@ -290,10 +290,28 @@ export default function CreatePage() {
                 ))}
               </div>
 
+              {/* Anti-fraud identity notice */}
+              <div style={{ border: '1px solid #3a2800', background: '#131000', padding: '14px 18px', marginBottom: 16 }}>
+                <div style={{ fontSize: 10, color: '#c8943a', letterSpacing: '0.18em', marginBottom: 8 }}>
+                  ANTI-FRAUD — PUBLISH YOUR REALM ADDRESS
+                </div>
+                <div style={{ fontSize: 11, color: '#7a6030', lineHeight: 1.8, marginBottom: 10 }}>
+                  Anyone can create a DAO with the same venue name. Your <strong style={{ color: '#e0b060' }}>realm address</strong> is
+                  the only on-chain proof of authenticity. Publish it on your official website and
+                  socials so attendees can verify before buying or voting.
+                </div>
+                <div style={{ fontFamily: "ui-monospace, 'Courier New', monospace", color: '#e0b060', fontSize: 11, wordBreak: 'break-all' }}>
+                  {success.realmPk}
+                </div>
+              </div>
+
               {/* Shareable URL */}
               <div style={{ border: '1px solid #2a3a1e', background: '#0d1a08', padding: '16px 20px', marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: '#4a6a34', letterSpacing: '0.14em', marginBottom: 10 }}>
+                <div style={{ fontSize: 11, color: '#4a6a34', letterSpacing: '0.14em', marginBottom: 6 }}>
                   SHARE — PROPOSALS PAGE
+                </div>
+                <div style={{ fontSize: 11, color: '#555555', marginBottom: 8 }}>
+                  This URL embeds the realm address — share this exact link so attendees land on your verified DAO.
                 </div>
                 <div style={{ fontSize: 11, color: '#7aaa5a', fontFamily: "ui-monospace, 'Courier New', monospace", wordBreak: 'break-all', marginBottom: 14 }}>
                   {window.location.origin + proposalsUrl}

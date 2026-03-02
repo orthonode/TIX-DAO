@@ -140,6 +140,32 @@ function LockPageInner() {
           </div>
         )}
 
+        {/* Mint verification banner */}
+        {hasParams && (
+          <div style={{
+            border: '1px solid #3a2800', background: '#131000',
+            padding: '14px 18px', marginBottom: 20,
+            fontSize: 11, letterSpacing: '0.06em', lineHeight: 1.9,
+          }}>
+            <div style={{ color: '#c8943a', marginBottom: 6, letterSpacing: '0.14em' }}>
+              ⚠  VERIFY TOKEN MINT BEFORE LOCKING
+            </div>
+            <div style={{ color: '#7a6030', marginBottom: 8 }}>
+              Duplicate venue names are possible. Only lock $TICK tokens if you confirmed
+              this mint address matches what the venue published on their official channels.
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ color: '#555555' }}>$TICK MINT</span>
+              <span style={{
+                fontFamily: "ui-monospace, 'Courier New', monospace",
+                color: '#e0b060', fontSize: 11, wordBreak: 'break-all',
+              }}>
+                {mintParam}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Existing escrow panel */}
         {escrowLoading && (
           <div style={{ fontSize: 12, color: '#555555', marginBottom: 16 }}>{'> checking existing escrow ...'}</div>
