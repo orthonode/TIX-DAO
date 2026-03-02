@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { PublicKey } from '@solana/web3.js';
 import { getProposal } from '@solana/spl-governance';
 import Navbar from '@/components/Navbar';
@@ -53,6 +53,7 @@ function ProposalsPageInner() {
   const { connected } = walletState;
   const { connection } = useConnection();
   const params = useSearchParams();
+  const router = useRouter();
 
   const realmParam          = params.get('realm');
   const governanceParam     = params.get('governance');
@@ -64,6 +65,24 @@ function ProposalsPageInner() {
 
   const proposalParams = [p1, p2, p3];
   const isOnChain = !!(realmParam && governanceParam && proposalOwnerRecord && mintParam && p1 && p2 && p3);
+
+  // Auto-load last deployed DAO from localStorage if no URL params
+  useEffect(() => {
+    if (isOnChain) return;
+    try {
+      const saved = localStorage.getItem('tix_dao_last');
+      if (!saved) return;
+      const d = JSON.parse(saved);
+      if (d.realmPk && d.governancePk && d.proposalPks?.[0]) {
+        router.replace(
+          `/proposals?realm=${d.realmPk}&governance=${d.governancePk}` +
+          `&p1=${d.proposalPks[0]}&p2=${d.proposalPks[1]}&p3=${d.proposalPks[2]}` +
+          `&proposalOwnerRecord=${d.proposalOwnerRecord}&mint=${d.mintPk}`
+        );
+      }
+    } catch { /* localStorage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // votes[i] = 'yes' | 'no' once cast
   const [votes,        setVotes]        = useState<Record<number, 'yes' | 'no'>>({});

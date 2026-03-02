@@ -165,14 +165,19 @@ export default function CreatePage() {
       addLog(`  ✓ Governance + 3 proposals live`, '#88cc88');
       addLog('> Done.', '#aaaaaa');
 
-      setSuccess({
+      const successData = {
         mintPk:              mintKeypair.publicKey.toBase58(),
         realmPk:             realmPk.toBase58(),
         governancePk:        governancePk.toBase58(),
         proposalPks:         proposalPks.map(p => p.toBase58()) as [string, string, string],
         proposalOwnerRecord: proposalOwnerRecord.toBase58(),
         tx1, tx2, tx3,
-      });
+      };
+      setSuccess(successData);
+      // Persist so /proposals auto-loads without requiring URL params
+      try {
+        localStorage.setItem('tix_dao_last', JSON.stringify(successData));
+      } catch { /* private browsing */ }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       addLog(`  ✗ ${msg}`, '#cc4444');
