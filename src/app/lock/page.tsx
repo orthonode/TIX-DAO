@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import Navbar from '@/components/Navbar';
@@ -36,9 +36,24 @@ function LockPageInner() {
   const { connected } = walletState;
   const { connection } = useConnection();
   const params = useSearchParams();
+  const router = useRouter();
 
   const mintParam  = params.get('mint');
   const hasParams  = !!mintParam;
+
+  // Auto-load mint from last deployed DAO if no URL params
+  useEffect(() => {
+    if (hasParams) return;
+    try {
+      const saved = localStorage.getItem('tix_dao_last');
+      if (!saved) return;
+      const d = JSON.parse(saved);
+      if (d.mintPk && d.realmPk) {
+        router.replace(`/lock?realm=${d.realmPk}&mint=${d.mintPk}`);
+      }
+    } catch { /* localStorage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selected,       setSelected]       = useState<number>(365);
   const [amount,         setAmount]         = useState('');

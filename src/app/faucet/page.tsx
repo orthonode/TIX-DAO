@@ -38,9 +38,9 @@ export default function FaucetPage() {
       setStep('done');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      const rateLimited = /rate|limit|429|too many/i.test(msg);
-      setErrMsg(rateLimited
-        ? 'Rate limited. Wait ~60 seconds and retry, or use faucet.solana.com.'
+      const rpcUnavailable = /rate|limit|429|too many|internal/i.test(msg);
+      setErrMsg(rpcUnavailable
+        ? 'Devnet RPC airdrop unavailable. Use an external faucet below.'
         : msg);
       setStep('error');
     }
@@ -96,16 +96,26 @@ export default function FaucetPage() {
         {step === 'error' && (
           <div style={{
             border: '1px solid #4a1a1a', background: '#1a0808',
-            padding: '12px 16px', marginBottom: 20,
-            fontSize: 12, color: '#cc4444', letterSpacing: '0.05em', lineHeight: 1.6,
+            padding: '16px 20px', marginBottom: 20,
+            fontSize: 12, color: '#cc4444', letterSpacing: '0.05em', lineHeight: 1.8,
           }}>
-            ✗  {errMsg}
-            {/rate|limit/i.test(errMsg) && (
-              <div style={{ marginTop: 8 }}>
-                <a href="https://faucet.solana.com" target="_blank" rel="noreferrer"
-                   style={{ color: '#e0b060', textDecoration: 'none' }}>
-                  Try faucet.solana.com ↗
-                </a>
+            <div>✗  {errMsg}</div>
+            {publicKey && (
+              <div style={{ marginTop: 12, color: '#888888', fontSize: 11 }}>
+                <div style={{ marginBottom: 6, color: '#555555' }}>external faucets (paste your address):</div>
+                <div style={{ fontFamily: "ui-monospace, 'Courier New', monospace", color: '#666666', marginBottom: 8, wordBreak: 'break-all' }}>
+                  {publicKey.toBase58()}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <a href={`https://faucet.solana.com`} target="_blank" rel="noreferrer"
+                     style={{ color: '#7a9fd4', textDecoration: 'none' }}>
+                    → faucet.solana.com ↗
+                  </a>
+                  <a href="https://faucet.quicknode.com/solana/devnet" target="_blank" rel="noreferrer"
+                     style={{ color: '#7a9fd4', textDecoration: 'none' }}>
+                    → faucet.quicknode.com ↗
+                  </a>
+                </div>
               </div>
             )}
           </div>
