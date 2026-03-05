@@ -5,6 +5,24 @@
 
 **Venue governance on-chain. Ticketing reclaimed.**
 
+## 🏗️ Where TIX-DAO Fits
+
+The live event ticketing stack on Solana now has two layers:
+
+| Layer | Protocol | Role |
+|---|---|---|
+| Infrastructure | KYD Labs / TIX Protocol | Ticket issuance, financing, payments |
+| **Governance** | **TIX-DAO** | **Venue + artist DAO, ve$TICK voting, on-chain rules** |
+
+TIX-DAO is not competing with KYD/TIX Protocol — it's the 
+governance layer that sits on top. KYD handles the rails. 
+TIX-DAO handles who controls them.
+
+No existing ticketing protocol has solved governance. 
+YellowHeart, TokenProof, GET Protocol — all failed because 
+a centralized team made the rules. TIX-DAO puts rule-making 
+on-chain, in the hands of venues, artists, and fans.
+
 [![CI](https://github.com/orthonode/TIX-DAO/actions/workflows/ci.yml/badge.svg)](https://github.com/orthonode/TIX-DAO/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Network](https://img.shields.io/badge/Solana-Devnet-9945FF.svg)](https://solana.com)
@@ -13,6 +31,8 @@
 [![Status](https://img.shields.io/badge/Status-Live-22C55E.svg)](https://tix-dao.vercel.app)
 [![Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)](./docs/CHANGELOG.md)
 [![By](https://img.shields.io/badge/By-Orthonode%20Labs-orange.svg)](https://orthonode.xyz)
+
+---
 
 </div>
 
@@ -26,7 +46,7 @@
 
 **Live:** [https://tix-dao.vercel.app](https://tix-dao.vercel.app)
 
-[![TIX-DAO Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red.svg)](https://youtu.be/DAG3S8uOmeE)
+[![TIX-DAO Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red.svg)](https://youtu.be/9539Wq7R8eA)
 
 ---
 
@@ -104,7 +124,7 @@ Full alignment: [`docs/HACKATHON.md`](./docs/HACKATHON.md)
 ┌────────────────────────────────────────────────────────────────┐
 │                       USER BROWSER                             │
 │                                                                │
-│  Next.js 16 App Router  (/  ·  /create  ·  /proposals  ·  /lock  ·  /finance)  │
+│  Next.js 16 App Router  (/  ·  /create  ·  /proposals  ·  /lock  ·  /finance  ·  /faucet)  │
 │  ┌────────────────────────────────────────────────────────┐    │
 │  │  WalletWrapper (Client Component, ssr: false)          │    │
 │  │    SolanaWalletProvider                                │    │
@@ -196,6 +216,9 @@ Full guide — Vercel deploy, custom RPC, troubleshooting: [`docs/DEPLOYMENT.md`
 
 **Infrastructure**
 - [x] Real SPL-Governance CPI calls — `withCreateRealm`, `withDepositGoverningTokens`, `withCreateGovernance`, `withCreateProposal`, `withSignOffProposal`
+- [x] ve$TICK Anchor escrow program — `lock_tokens` + `unlock_tokens` instructions on devnet
+- [x] Live proposal deserialization — real vote tallies via WebSocket subscription
+- [x] SOL faucet — 2 SOL devnet airdrop with rate-limit handling
 - [x] SES lockdown fix — governance program ID stored as pre-computed `Uint8Array` bytes
 - [x] Wallet Standard auto-discovery — Phantom, Solflare, Backpack with no explicit registration
 - [x] `autoConnect` with silent error handling — no crash on missing wallet or user rejection
@@ -260,9 +283,12 @@ tix-dao/
 │   │   ├── lock/
 │   │   │   ├── layout.tsx          Per-page metadata (title: "Lock Tokens — ve$TICK")
 │   │   │   └── page.tsx            Lock Tokens — ve$TICK duration selector + power calc
-│   │   └── finance/
-│   │       ├── layout.tsx          Per-page metadata (title: "Venue Finance — RWA Advance")
-│   │       └── page.tsx            Finance — RWA advance calculator + mock term sheet
+│   │   ├── finance/
+│   │   │   ├── layout.tsx          Per-page metadata (title: "Venue Finance — RWA Advance")
+│   │   │   └── page.tsx            Finance — RWA advance calculator + mock term sheet
+│   │   └── faucet/
+│   │       ├── layout.tsx          Per-page metadata (title: "SOL Faucet")
+│   │       └── page.tsx            SOL faucet — 2 SOL devnet airdrop
 │   │
 │   ├── components/
 │   │   ├── WalletProvider.tsx      Solana context — autoConnect + silent onError
@@ -273,15 +299,15 @@ tix-dao/
 │   │
 │   └── lib/
 │       ├── governance.ts           Env-var constants — GOVERNANCE_PROGRAM_ID, NETWORK
-│       └── governanceActions.ts    On-chain helpers — createTickMint, createRealmWithDeposit,
+│       ├── governanceActions.ts    On-chain helpers — createTickMint, createRealmWithDeposit,
 │                                   createGovernanceAndProposal, lockTokens, castVoteOnProposal
+│       └── tick_escrow_idl.json    Anchor IDL for ve$TICK escrow program
 │
 ├── public/
 │   └── robots.txt                  Allow all crawlers + sitemap reference
 │
 ├── docs/
 │   ├── ARCHITECTURE.md             Full technical architecture
-│   ├── SECURITY_REVIEW.md          Security audit report (2026-02-27, zero findings)
 │   ├── CHANGELOG.md                Detailed changelog
 │   ├── DEPLOYMENT.md               Local dev, Vercel, custom RPC, troubleshooting
 │   ├── ROADMAP.md                  4-phase roadmap with honest risks
@@ -290,6 +316,15 @@ tix-dao/
 │   ├── TERMS.md                    Terms of use and disclaimer
 │   ├── PRIVACY.md                  Privacy policy — no data collected
 │   └── HACKATHON.md                Judges brief — narrative, track alignment, checklist
+│
+├── tick-escrow/                     Anchor workspace — ve$TICK escrow program
+│   ├── Anchor.toml                  Program config (devnet deployment)
+│   ├── Cargo.toml                   Rust workspace config
+│   └── programs/
+│       └── tick-escrow/
+│           ├── Cargo.toml           Program dependencies
+│           └── src/
+│               └── lib.rs           ve$TICK lock/unlock instructions
 │
 ├── CHANGELOG.md                    Root changelog (links to docs/CHANGELOG.md)
 ├── CONTRIBUTING.md                 Root contributing guide (links to docs/CONTRIBUTING.md)
@@ -312,7 +347,7 @@ tix-dao/
 | Phase | Timeline | Focus |
 |---|---|---|
 | **Phase 1 — MVP** | Hackathon ✅ | Full UI, real on-chain TX1/TX2/TX3, wallet integration, deployed |
-| **Phase 2 — Real Voting** | Month 1–2 | Real `castVote` CPI, live proposal deserialization, $TICK faucet, ve$TICK escrow |
+| **Phase 2 — Live Features** | Month 1–2 ✅ | Real `castVote` CPI, live proposal deserialization, $TICK faucet, ve$TICK escrow |
 | **Phase 3 — KYD Integration** | Month 3–4 | TICKS RWA protocol, venue financing, artist royalty enforcement |
 | **Phase 4 — Mainnet** | Month 5–6 | Mainnet launch, 10 venue onboarding, $TICK token launch |
 
@@ -322,7 +357,7 @@ Full roadmap with goals, code targets, and known risks: [`docs/ROADMAP.md`](./do
 
 ## Contributing
 
-Contributions for Phase 2 on-chain integration are welcome. Read the guide first:
+Contributions for Phase 3 on-chain integration are welcome. Read the guide first:
 
 - [`docs/CONTRIBUTING.md`](./docs/CONTRIBUTING.md) — branch strategy, commit convention, PR process, code standards
 - Branch from `develop`, not `main`
